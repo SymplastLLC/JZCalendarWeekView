@@ -52,6 +52,7 @@ open class JZBaseWeekView: UIView {
     
     public var flowLayout: JZWeekViewFlowLayout = {
         let layout = JZWeekViewFlowLayout()
+        layout.scrollDirection = .vertical
         return layout
     }()
 
