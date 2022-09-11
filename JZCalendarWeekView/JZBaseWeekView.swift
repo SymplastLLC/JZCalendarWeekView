@@ -112,7 +112,7 @@ open class JZBaseWeekView: UIView {
     public var isAllDaySupported: Bool = false
     private var isEnabledHorizontalScrolling: Bool {
         // temprorary disabled
-        true
+        false
 //        guard viewMode == .week else { return true }
 //
 //        return numOfDays == 7
