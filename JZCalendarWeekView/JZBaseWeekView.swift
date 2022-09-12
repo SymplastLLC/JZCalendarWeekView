@@ -102,8 +102,21 @@ open class JZBaseWeekView: UIView {
     public var notAllDayEventsBySection = [Date: [JZAllDayEvent]]()
     public var allDayEventsBySection = [Date: [JZAllDayEvent]]()
     public weak var baseDelegate: JZBaseViewDelegate?
-    open var contentViewWidth: CGFloat {
+    private var isNeedRestrictHorizontalScroll: Bool {
+        numOfResources > minimalNumberOfResources
+    }
+    private var frameWidth: CGFloat {
+        if let minWidth = minimalSubSectionWidth, isNeedRestrictHorizontalScroll {
+            return minWidth * CGFloat(numOfResources) + flowLayout.rowHeaderWidth
+        } else {
+            return frame.width
+        }
+    }
+    private var actualFrameWidth: CGFloat {
         frame.width - flowLayout.rowHeaderWidth - flowLayout.contentsMargin.left - flowLayout.contentsMargin.right
+    }
+    open var contentViewWidth: CGFloat {
+        frameWidth - flowLayout.rowHeaderWidth - flowLayout.contentsMargin.left - flowLayout.contentsMargin.right
     }
     open var contentViewHeight: CGFloat {
         frame.height - flowLayout.allDayHeaderHeight - flowLayout.contentsMargin.top - flowLayout.contentsMargin.bottom - flowLayout.columnHeaderHeight - safeAreaInsets.bottom
@@ -111,11 +124,14 @@ open class JZBaseWeekView: UIView {
     private var isFirstAppear: Bool = true
     public var isAllDaySupported: Bool = false
     private var isEnabledHorizontalScrolling: Bool {
-        // temprorary disabled
+        if UIDevice.current.userInterfaceIdiom == .phone {
+            return false
+        } else {
+            return isNeedRestrictHorizontalScroll
+        }
+    }
+    private var isEnabledPaggingEffect: Bool {
         false
-//        guard viewMode == .week else { return true }
-//
-//        return numOfDays == 7
     }
     internal var scrollDirection: ScrollDirection?
 
@@ -170,11 +186,11 @@ open class JZBaseWeekView: UIView {
 
         flowLayout.sectionHeight = contentViewHeight
         flowLayout.sectionWidth = getSectionWidth()
-//        if let minimalWidth = minimalSubSectionWidth, numOfResources > minimalNumberOfResources {
-//            flowLayout.subsectionWidth = minimalWidth
-//        } else {
+        if let minimalWidth = minimalSubSectionWidth, isNeedRestrictHorizontalScroll {
+            flowLayout.subsectionWidth = minimalWidth
+        } else {
             flowLayout.subsectionWidth = flowLayout.sectionWidth / CGFloat(max(numOfResources, 1))
-        //}
+        }
     }
 
     /// Was going to use toDecimal1Value as well, but the CGFloat is always got the wrong precision
@@ -192,7 +208,7 @@ open class JZBaseWeekView: UIView {
             sectionWidth = sectionWidth.rounded(.up)
         }
         // Maximum added width for row header should be 0.25 * numberOfRows
-        let rowHeaderWidth = frame.width - flowLayout.contentsMargin.left - flowLayout.contentsMargin.right - sectionWidth * value
+        let rowHeaderWidth = frameWidth - flowLayout.contentsMargin.left - flowLayout.contentsMargin.right - sectionWidth * value
         flowLayout.rowHeaderWidth = rowHeaderWidth
         return sectionWidth
     }
@@ -665,6 +681,8 @@ extension JZBaseWeekView: UICollectionViewDelegate, UICollectionViewDelegateFlow
         
         // vertical scroll should not call paginationEffect
         guard let scrollDirection = self.scrollDirection, scrollDirection.direction == .horizontal else { return }
+        
+        guard isEnabledPaggingEffect else { return }
         paginationEffect(scrollView, withVelocity: velocity, targetContentOffset: targetContentOffset)
     }
 
@@ -703,10 +721,19 @@ extension JZBaseWeekView: UICollectionViewDelegate, UICollectionViewDelegateFlow
                 scrollView.contentOffset.x = lockedAt
             }
         }
+        
         // all day bar update and check scrollable range when scrolling horizontally
         guard flowLayout.sectionWidth != nil, scrollDirection.direction == .horizontal else { return }
         checkScrollableRange(contentOffsetX: scrollView.contentOffset.x)
         updateAllDayBar(isScrolling: true)
+        
+        guard isNeedRestrictHorizontalScroll else { return }
+        let rightLock = ((contentViewWidth - actualFrameWidth) + contentViewWidth)
+        if scrollView.contentOffset.x < contentViewWidth {
+            collectionView.contentOffset.x = contentViewWidth
+        } else if scrollView.contentOffset.x > rightLock {
+            collectionView.contentOffset.x = rightLock
+        }
     }
 
     private func paginationEffect(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
