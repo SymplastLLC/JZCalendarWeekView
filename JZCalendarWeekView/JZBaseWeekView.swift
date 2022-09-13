@@ -367,7 +367,13 @@ open class JZBaseWeekView: UIView {
             guard let strongSelf = self else { return }
             strongSelf.updateAllDayBar(isScrolling: false)
             // initial day is one page before the settle day
-            strongSelf.collectionView.setContentOffsetWithoutDelegate(CGPoint(x: strongSelf.contentViewWidth,
+            let x: CGFloat
+            if strongSelf.contentViewWidth < strongSelf.collectionView.contentOffset.x {
+                x = strongSelf.collectionView.contentOffset.x
+            } else {
+                x = strongSelf.contentViewWidth
+            }
+            strongSelf.collectionView.setContentOffsetWithoutDelegate(CGPoint(x: x,
                                                                               y: strongSelf.getYOffset()),
                                                                       animated: false)
             strongSelf.flowLayout.invalidateLayoutCache()
