@@ -389,7 +389,8 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     // MARK: - Layout Attributes
     func layoutItemsAttributes(section: Int, sectionX: CGFloat, calendarStartY: CGFloat) {
         guard let collectionView = collectionView,
-              let resCount = delegate?.collectionView(collectionView, resourceCountWithLayout: self) else { return }
+              let allResourceCount = delegate?.collectionView(collectionView,
+                                                              resourceCountWithLayout: self) else { return }
         
         var attributes = UICollectionViewLayoutAttributesResource()
         var sectionItemAttributes = [UICollectionViewLayoutAttributesResource]()
@@ -418,7 +419,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
             }
             
             let widthItem: CGFloat
-            if resCount > 1 {
+            if allResourceCount > 1 {
                 widthItem = subsectionWidth
             } else {
                 widthItem = sectionWidth
@@ -459,23 +460,14 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
             }
         }
         
-        if resCount == 1 {
+        for resIdx in 0..<allResourceCount {
+            let resourceOffset = nearbyint(subsectionWidth * CGFloat(resIdx))
             adjustItemsForOverlap(sectionItemAttributes,
                                   inSection: section,
-                                  sectionMinX: sectionX,
+                                  sectionMinX: sectionX + resourceOffset,
                                   currentSectionZ: zIndexForElementKind(JZSupplementaryViewKinds.eventCell),
-                                  sectionWidth: sectionWidth)
-        } else if resCount > 1 {
-            for resIdx in 0...resCount {
-                let resourceOffset = nearbyint(subsectionWidth * CGFloat(resIdx))
-                adjustItemsForOverlap(sectionItemAttributes,
-                                      inSection: section,
-                                      sectionMinX: sectionX + resourceOffset,
-                                      currentSectionZ: zIndexForElementKind(JZSupplementaryViewKinds.eventCell),
-                                      resourceIdx: resIdx,
-                                      sectionWidth: subsectionWidth)
-                
-            }
+                                  resourceIdx: resIdx,
+                                  sectionWidth: subsectionWidth)
         }
     }
     
@@ -669,7 +661,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
                                     inSection: Int,
                                     sectionMinX: CGFloat,
                                     currentSectionZ: Int,
-                                    resourceIdx: Int = 1,
+                                    resourceIdx: Int = 0,
                                     sectionWidth: CGFloat) {
         let (maxOverlapIntervalCount, overlapGroups) = groupOverlapItems(items: sectionItemAttributes.filter { $0.resourceIndex == resourceIdx })
         guard maxOverlapIntervalCount > 1 else { return }
