@@ -1090,11 +1090,13 @@ extension JZWeekViewFlowLayout {
         if let attributes = attributes as? JZStyleLayoutAttributes {
             attributes.backgroundColor = delegate?.collectionView(collectionView, colorForOutsideScreenDecorationViewAt: indexPath)
         }
+        
         attributes.zIndex = zIndexForElementKind(JZDecorationViewKinds.outscreenCell)
         
         let inset: CGFloat = 4
         let height: CGFloat = 5
         let minY: CGFloat
+        var frameItem = CGRect.zero
         
         switch position {
         case .center:
@@ -1102,14 +1104,25 @@ extension JZWeekViewFlowLayout {
             return
         case .top:
             minY = collectionView.contentOffset.y + inset + columnHeaderHeight
-            // For a right hierarchy we need to change zIndex
-            attributes.zIndex -= indexPath.item
+            frameItem = CGRect(x: minX, y: minY, width: subsectionWidth, height: height)
+            
+            if let overlappedKey = outscreenCellsAttributes.first(where: { $0.value.frame.contains(frameItem.origin) })?.key {
+                outscreenCellsAttributes[overlappedKey]?.zIndex += 1
+            }
+            
+            attributes.zIndex += indexPath.item
         case .bottom:
             minY = collectionView.contentOffset.y + collectionView.bounds.height - inset - height
-            attributes.zIndex += indexPath.item
+            frameItem = CGRect(x: minX, y: minY, width: subsectionWidth, height: height)
+            
+            if let overlappedKey = outscreenCellsAttributes.first(where: { $0.value.frame.contains(frameItem.origin) })?.key {
+                outscreenCellsAttributes[overlappedKey]?.zIndex += 1
+            }
+            
+            attributes.zIndex -= indexPath.item
         }
         
-        attributes.frame = CGRect(x: minX, y: minY, width: subsectionWidth, height: height)
+        attributes.frame = frameItem
         attributes.alpha = 1
     }
     

@@ -28,6 +28,27 @@ class LongPressWeekView: JZLongPressWeekView {
     }
     
     override func collectionView(_ collectionView: UICollectionView, colorForOutsideScreenDecorationViewAt indexPath: IndexPath) -> UIColor? {
+        let event = getCurrentEvent(with: indexPath)
+        
+        if event?.id == "0" {
+            return .systemYellow
+        } else if event?.id == "1" {
+            return .systemRed
+        } else if event?.id == "11" {
+            return .systemBrown
+        } else if event?.id == "2" {
+            if #available(iOS 15.0, *) {
+                return .systemCyan
+            } else {
+                return .black
+            }
+        } else if event?.id == "3" {
+            if #available(iOS 15.0, *) {
+                return .systemMint
+            } else {
+                return .brown
+            }
+        }
         return UIColor(hex: 0x0899FF)
     }
 
