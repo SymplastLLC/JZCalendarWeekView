@@ -6,6 +6,8 @@
 //  Copyright © 2022 Jeff Zhang. All rights reserved.
 //
 
+#if os(iOS)
+
 import UIKit
 
 public enum JZCalendarReloadOption {
@@ -311,3 +313,5 @@ public struct RestrictedArea: Hashable, Equatable {
         return item
     }
 }
+
+#endif

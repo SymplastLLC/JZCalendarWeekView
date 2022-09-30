@@ -5,6 +5,9 @@
 //  Created by Jeff Zhang on 28/3/18.
 //  Copyright © 2018 Jeff Zhang. All rights reserved.
 //
+
+#if os(iOS)
+
 import UIKit
 
 public protocol JZBaseViewDelegate: AnyObject {
@@ -955,3 +958,5 @@ extension JZBaseWeekView: WeekViewFlowLayoutDelegate {
     }
     
 }
+
+#endif

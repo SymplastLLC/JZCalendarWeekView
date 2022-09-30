@@ -6,6 +6,8 @@
 //  Copyright © 2018 Jeff Zhang. All rights reserved.
 //
 
+#if os(iOS)
+
 import UIKit
 
 public protocol JZLongPressViewDelegate: AnyObject {
@@ -508,3 +510,5 @@ extension JZLongPressWeekView {
     }
 
 }
+
+#endif

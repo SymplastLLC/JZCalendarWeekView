@@ -6,6 +6,8 @@
 //  Copyright © 2018 Jeff Zhang. All rights reserved.
 //
 
+#if os(iOS)
+
 import UIKit
 
 /// Header for each row (every hour) in collectionView (Supplementary View)
@@ -62,3 +64,5 @@ open class JZRowHeader: UICollectionReusableView {
     }
 
 }
+
+#endif

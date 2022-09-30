@@ -8,6 +8,8 @@
 
 // Thanks for https://gist.github.com/Visput/d40c5ceaefbc50c7377597ba0865c9df
 
+#if os(iOS)
+
 import Foundation
 
 final class WeakTimer {
@@ -47,3 +49,5 @@ final class WeakTimer {
         }
     }
 }
+
+#endif

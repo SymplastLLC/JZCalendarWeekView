@@ -4,6 +4,9 @@
 //
 //  Created by Aleksei Konshin on 20.08.2020.
 //
+
+#if os(iOS)
+
 import UIKit
 
 final class JZTemplatesLayoutAttributes: UICollectionViewLayoutAttributes {
@@ -15,3 +18,5 @@ final class JZTemplatesLayoutAttributes: UICollectionViewLayoutAttributes {
     var labelOffset: Double?
 
 }
+
+#endif

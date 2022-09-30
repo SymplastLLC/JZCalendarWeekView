@@ -6,6 +6,8 @@
 //  Copyright © 2018 Jeff Zhang. All rights reserved.
 //
 
+#if os(iOS)
+
 import UIKit
 
 open class JZCurrentTimelinePage: UICollectionReusableView {
@@ -47,3 +49,5 @@ open class JZCurrentTimelinePage: UICollectionReusableView {
     }
 
 }
+
+#endif

@@ -6,6 +6,8 @@
 //  Copyright © 2018 Jeff Zhang. All rights reserved.
 //
 
+#if os(iOS)
+
 import UIKit
 
 /// Top Left corner in collectionView (Supplementary View)
@@ -33,3 +35,5 @@ open class JZCornerHeader: UICollectionReusableView {
     }
 
 }
+
+#endif

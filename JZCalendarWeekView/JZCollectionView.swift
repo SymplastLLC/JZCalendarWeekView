@@ -6,6 +6,8 @@
 //  Copyright © 2018 Jeff Zhang. All rights reserved.
 //
 
+#if os(iOS)
+
 import UIKit
 
 public class JZCollectionView: UICollectionView {
@@ -40,3 +42,5 @@ public class JZCollectionView: UICollectionView {
     }
 
 }
+
+#endif

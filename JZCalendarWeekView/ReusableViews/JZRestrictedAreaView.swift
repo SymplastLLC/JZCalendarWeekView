@@ -4,6 +4,9 @@
 //
 //  Created by Aleksei Konshin on 14.02.2020.
 //
+
+#if os(iOS)
+
 import UIKit
 
 /// Gray colored area view
@@ -130,3 +133,5 @@ open class JZRestrictedAreaView: UICollectionReusableView, TimerThrottle {
     }
 
 }
+
+#endif

@@ -6,6 +6,8 @@
 //  Copyright © 2018 Jeff Zhang. All rights reserved.
 //
 
+#if os(iOS)
+
 import UIKit
 
 /// Header for each column (section, day) in collectionView (Supplementary View)
@@ -58,3 +60,5 @@ open class JZColumnHeader: UICollectionReusableView {
     }
 
 }
+
+#endif

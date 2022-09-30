@@ -6,6 +6,8 @@
 //  Copyright © 2018 Jeff Zhang. All rights reserved.
 //
 
+#if os(iOS)
+
 import UIKit
 
 open class JZAllDayEvent: JZBaseEvent {
@@ -23,3 +25,5 @@ open class JZAllDayEvent: JZBaseEvent {
     }
 
 }
+
+#endif

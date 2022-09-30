@@ -6,6 +6,8 @@
 //  Inspired and followed by WRCalendarView (https://github.com/wayfinders/WRCalendarView)
 //
 
+#if os(iOS)
+
 import UIKit
 import SnapKit
 
@@ -1186,3 +1188,5 @@ extension JZWeekViewFlowLayout {
         }
     }
 }
+
+#endif

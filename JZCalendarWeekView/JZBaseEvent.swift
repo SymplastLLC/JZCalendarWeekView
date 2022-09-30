@@ -5,6 +5,9 @@
 //  Created by Jeff Zhang on 29/3/18.
 //  Copyright © 2018 Jeff Zhang. All rights reserved.
 //
+
+#if os(iOS)
+
 import UIKit
 
 open class JZBaseEvent: NSObject, NSCopying {
@@ -89,3 +92,5 @@ public extension JZBaseEvent {
     }
     
 }
+
+#endif

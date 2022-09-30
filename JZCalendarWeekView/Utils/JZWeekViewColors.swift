@@ -6,6 +6,8 @@
 //  Copyright © 2018 Jeff Zhang. All rights reserved.
 //
 
+#if os(iOS)
+
 import UIKit
 
 /// cannot change for now, will implement theme in the future
@@ -41,3 +43,5 @@ extension UIColor {
         )
     }
 }
+
+#endif

@@ -4,6 +4,9 @@
 //
 //  Created by Sergei Kviatkovskii on 04.05.2021.
 //
+
+#if os(iOS)
+
 import UIKit
 
 open class JZRowDividerHorizontalHeader: UICollectionReusableView {
@@ -42,3 +45,5 @@ open class JZRowDividerHorizontalHeader: UICollectionReusableView {
         }
     }
 }
+
+#endif

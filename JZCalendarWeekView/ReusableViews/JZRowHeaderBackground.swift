@@ -6,6 +6,8 @@
 //  Copyright © 2018 Jeff Zhang. All rights reserved.
 //
 
+#if os(iOS)
+
 import UIKit
 
 open class JZRowHeaderBackground: UICollectionReusableView {
@@ -22,3 +24,5 @@ open class JZRowHeaderBackground: UICollectionReusableView {
         fatalError("init(coder:) has not been implemented")
     }
 }
+
+#endif

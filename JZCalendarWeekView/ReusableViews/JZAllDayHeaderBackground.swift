@@ -6,6 +6,8 @@
 //  Copyright © 2018 Jeff Zhang. All rights reserved.
 //
 
+#if os(iOS)
+
 import UIKit
 
 open class JZAllDayHeaderBackground: UICollectionReusableView {
@@ -34,3 +36,5 @@ open class JZAllDayHeaderBackground: UICollectionReusableView {
     }
 
 }
+
+#endif

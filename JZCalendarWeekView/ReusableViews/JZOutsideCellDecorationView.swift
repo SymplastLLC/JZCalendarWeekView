@@ -5,6 +5,8 @@
 //  Created by Aleksei Konshin on 04.02.2020.
 //
 
+#if os(iOS)
+
 import UIKit
 
 open class JZOutsideCellDecorationView: UICollectionReusableView {
@@ -45,3 +47,5 @@ open class JZOutsideCellDecorationView: UICollectionReusableView {
     }
 
 }
+
+#endif
