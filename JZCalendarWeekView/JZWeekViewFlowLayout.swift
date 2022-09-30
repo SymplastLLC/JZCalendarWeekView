@@ -1103,12 +1103,13 @@ extension JZWeekViewFlowLayout {
         case .top:
             minY = collectionView.contentOffset.y + inset + columnHeaderHeight
             // For a right hierarchy we need to change zIndex
-            attributes.zIndex += indexPath.item
+            attributes.zIndex -= indexPath.item
         case .bottom:
             minY = collectionView.contentOffset.y + collectionView.bounds.height - inset - height
-            attributes.zIndex -= indexPath.item
+            attributes.zIndex += indexPath.item
         }
         
+        print(attributes.zIndex)
         attributes.frame = CGRect(x: minX, y: minY, width: subsectionWidth, height: height)
         attributes.alpha = 1
     }

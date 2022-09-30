@@ -26,6 +26,11 @@ class LongPressWeekView: JZLongPressWeekView {
         }
         preconditionFailure("LongPressEventCell and AllDayEvent should be casted")
     }
+    
+    override func collectionView(_ collectionView: UICollectionView, colorForOutsideScreenDecorationViewAt indexPath: IndexPath) -> UIColor? {
+        let event = getCurrentEvent(with: indexPath) as? AllDayEvent
+        return UIColor(hex: 0x0899FF)
+    }
 
     override func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
         if kind == JZSupplementaryViewKinds.allDayHeader {
