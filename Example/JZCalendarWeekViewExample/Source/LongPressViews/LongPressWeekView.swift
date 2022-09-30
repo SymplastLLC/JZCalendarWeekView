@@ -28,7 +28,6 @@ class LongPressWeekView: JZLongPressWeekView {
     }
     
     override func collectionView(_ collectionView: UICollectionView, colorForOutsideScreenDecorationViewAt indexPath: IndexPath) -> UIColor? {
-        let event = getCurrentEvent(with: indexPath) as? AllDayEvent
         return UIColor(hex: 0x0899FF)
     }
 

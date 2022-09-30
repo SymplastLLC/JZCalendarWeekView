@@ -1109,7 +1109,6 @@ extension JZWeekViewFlowLayout {
             attributes.zIndex += indexPath.item
         }
         
-        print(attributes.zIndex)
         attributes.frame = CGRect(x: minX, y: minY, width: subsectionWidth, height: height)
         attributes.alpha = 1
     }
