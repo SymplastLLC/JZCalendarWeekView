@@ -18,6 +18,7 @@ class AllDayViewModel: NSObject {
     lazy var events = [
         AllDayEvent(id: "0", title: "One", startDate: firstDate, endDate: firstDate.add(component: .hour, value: 1), location: "Melbourne", isAllDay: false),
         AllDayEvent(id: "1", title: "Two", startDate: secondDate.add(component: .hour, value: -2), endDate: secondDate.add(component: .hour, value: -1), location: "Sydney", isAllDay: false),
+        AllDayEvent(id: "12", title: "Two-2", startDate: secondDate.add(component: .hour, value: -1), endDate: secondDate.add(component: .hour, value: 1), location: "Sydney", isAllDay: false),
         AllDayEvent(id: "11", title: "Two-1", startDate: secondDate, endDate: secondDate.add(component: .hour, value: 4), location: "Sydney", isAllDay: false),
         AllDayEvent(id: "2", title: "Three", startDate: thirdDate.add(component: .hour, value: -2), endDate: thirdDate.add(component: .hour, value: 2), location: "Tasmania", isAllDay: false),
         AllDayEvent(id: "3", title: "Four", startDate: thirdDate, endDate: thirdDate.add(component: .hour, value: 26), location: "Canberra", isAllDay: false),

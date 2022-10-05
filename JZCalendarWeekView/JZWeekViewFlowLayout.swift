@@ -1113,23 +1113,14 @@ extension JZWeekViewFlowLayout {
         case .top:
             minY = collectionView.contentOffset.y + inset + columnHeaderHeight
             frameItem = CGRect(x: minX, y: minY, width: subsectionWidth, height: height)
-            
-            if let overlappedKey = outscreenCellsAttributes.first(where: { $0.value.frame.contains(frameItem.origin) })?.key {
-                outscreenCellsAttributes[overlappedKey]?.zIndex += 1
-            }
-            
-            attributes.zIndex += indexPath.item
         case .bottom:
             minY = collectionView.contentOffset.y + collectionView.bounds.height - inset - height
             frameItem = CGRect(x: minX, y: minY, width: subsectionWidth, height: height)
-            
-            if let overlappedKey = outscreenCellsAttributes.first(where: { $0.value.frame.contains(frameItem.origin) })?.key {
-                outscreenCellsAttributes[overlappedKey]?.zIndex += 1
-            }
-            
-            attributes.zIndex -= indexPath.item
         }
         
+        if let maxZIndex = outscreenCellsAttributes.max(by: { $0.value.zIndex > $1.value.zIndex })?.value.zIndex {
+            attributes.zIndex = maxZIndex + 1
+        }
         attributes.frame = frameItem
         attributes.alpha = 1
     }

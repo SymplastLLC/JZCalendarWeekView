@@ -42,6 +42,8 @@ class LongPressWeekView: JZLongPressWeekView {
             } else {
                 return .black
             }
+        } else if event?.id == "12" {
+            return .systemOrange
         } else if event?.id == "3" {
             if #available(iOS 15.0, *) {
                 return .systemMint
