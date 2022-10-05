@@ -404,20 +404,27 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
             let itemEndTime = endTimeForIndexPath(itemIndexPath)
             let itemResourceIndex = resourceIndexForIndexPath(itemIndexPath)
             let zIndex = zIndexForIndexPath(itemIndexPath)
-            let startHourY = CGFloat(itemStartTime.hour!) * hourHeightForZoomLevel
-            let startMinuteY = CGFloat(itemStartTime.minute!) * minuteHeight
+            var startHourY = CGFloat(itemStartTime.hour!) * hourHeightForZoomLevel
+            var startMinuteY = CGFloat(itemStartTime.minute!) * minuteHeight
             var endHourY: CGFloat
-            let endMinuteY = CGFloat(itemEndTime.minute!) * minuteHeight
+            var endMinuteY = CGFloat(itemEndTime.minute!) * minuteHeight
 
             if itemEndTime.day! != itemStartTime.day! {
                 endHourY = CGFloat(Calendar.current.maximumRange(of: .hour)!.count) * hourHeightForZoomLevel + CGFloat(itemEndTime.hour!) * hourHeightForZoomLevel
             } else {
                 if itemEndTime.hour! > timelineType.timeRange.upperBound {
                     endHourY = CGFloat(timelineType.timeRange.upperBound) * hourHeightForZoomLevel
+                    endMinuteY = 0
                 } else {
                     endHourY = CGFloat(itemEndTime.hour!) * hourHeightForZoomLevel
                 }
+                startHourY -= timeRangeLowerOffset
                 endHourY -= timeRangeLowerOffset
+                
+                if startHourY < 0 {
+                    startHourY = 0
+                    startMinuteY = 0
+                }
             }
             
             let widthItem: CGFloat
@@ -436,7 +443,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
             if (itemMaxY - itemMinY) > 0 && itemMinY > 0 {
                 (attributes, itemAttributes) = layoutAttributesForCell(at: itemIndexPath, withItemCache: itemAttributes)
                 attributes.frame = CGRect(x: itemMinX, y: itemMinY,
-                                          width: itemMaxX - itemMinX, height: itemMaxY - itemMinY)
+                                          width: itemMaxX - itemMinX, height: abs(itemMaxY - itemMinY))
                 attributes.resourceIndex = itemResourceIndex
                 
                 if isCalendarBlockForIndexPath(itemIndexPath) {
@@ -459,7 +466,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
                                                    position: position)
                     sectionItemAttributes.append(attributes)
                 }
-            }
+           }
         }
         
         for resIdx in 0..<allResourceCount {
@@ -912,7 +919,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
             if let date = delegate?.collectionView(collectionView!,
                                                    layout: self, startTimeForItemAtIndexPath: indexPath) {
                 var startDate = Calendar.current.dateComponents([.day, .hour, .minute], from: date)
-                startDate.hour = (startDate.hour ?? 0) - timelineType.timeRange.lowerBound
+                startDate.hour = (startDate.hour ?? 0) //- timelineType.timeRange.lowerBound
                 cachedStartTimeDateComponents[indexPath] = startDate
                 return cachedStartTimeDateComponents[indexPath]!
             } else {
@@ -927,8 +934,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
         } else {
             if let date = delegate?.collectionView(collectionView!,
                                                    layout: self, endTimeForItemAtIndexPath: indexPath) {
-                var endTime = Calendar.current.dateComponents([.day, .hour, .minute], from: date)
-                endTime.hour = (endTime.hour ?? 0)
+                let endTime = Calendar.current.dateComponents([.day, .hour, .minute], from: date)
                 cachedEndTimeDateComponents[indexPath] = endTime
                 return cachedEndTimeDateComponents[indexPath]!
             } else {
