@@ -420,11 +420,6 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
                 }
                 startHourY -= timeRangeLowerOffset
                 endHourY -= timeRangeLowerOffset
-                
-                if startHourY < 0 {
-                    startHourY = 0
-                    startMinuteY = 0
-                }
             }
             
             let widthItem: CGFloat
@@ -440,33 +435,31 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
             let itemMaxX = (itemMinX + (widthItem - (itemMargin.left + itemMargin.right))).toDecimal1Value()
             let itemMaxY = (endHourY + endMinuteY + calendarStartY - itemMargin.bottom).toDecimal1Value()
             
-            if (itemMaxY - itemMinY) > 0 && itemMinY > 0 {
-                (attributes, itemAttributes) = layoutAttributesForCell(at: itemIndexPath, withItemCache: itemAttributes)
-                attributes.frame = CGRect(x: itemMinX, y: itemMinY,
-                                          width: itemMaxX - itemMinX, height: abs(itemMaxY - itemMinY))
-                attributes.resourceIndex = itemResourceIndex
-                
-                if isCalendarBlockForIndexPath(itemIndexPath) {
-                    attributes.zIndex = zIndexForElementKind(JZSupplementaryViewKinds.calendarBlockCell,
-                                                             withOffset: zIndex)
+            (attributes, itemAttributes) = layoutAttributesForCell(at: itemIndexPath, withItemCache: itemAttributes)
+            attributes.frame = CGRect(x: itemMinX, y: itemMinY,
+                                      width: itemMaxX - itemMinX, height: abs(itemMaxY - itemMinY))
+            attributes.resourceIndex = itemResourceIndex
+            
+            if isCalendarBlockForIndexPath(itemIndexPath) {
+                attributes.zIndex = zIndexForElementKind(JZSupplementaryViewKinds.calendarBlockCell,
+                                                         withOffset: zIndex)
+            } else {
+                attributes.zIndex = zIndexForElementKind(JZSupplementaryViewKinds.eventCell)
+                let insetInsideCell: CGFloat = 20
+                let position: OutscreenDecorationViewPosition
+                if attributes.frame.minY > collectionView.contentOffset.y + collectionView.bounds.height - insetInsideCell {
+                    position = .bottom
+                } else if attributes.frame.minY < collectionView.contentOffset.y + columnHeaderHeight + insetInsideCell {
+                    position = .top
                 } else {
-                    attributes.zIndex = zIndexForElementKind(JZSupplementaryViewKinds.eventCell)
-                    let insetInsideCell: CGFloat = 20
-                    let position: OutscreenDecorationViewPosition
-                    if attributes.frame.minY > collectionView.contentOffset.y + collectionView.bounds.height - insetInsideCell {
-                        position = .bottom
-                    } else if attributes.frame.maxY < collectionView.contentOffset.y + columnHeaderHeight + insetInsideCell {
-                        position = .top
-                    } else {
-                        position = .center
-                    }
-                    addOutsideScreenDecorationView(indexPath: itemIndexPath,
-                                                   minX: itemMinX,
-                                                   maxX: itemMaxX,
-                                                   position: position)
-                    sectionItemAttributes.append(attributes)
+                    position = .center
                 }
-           }
+                addOutsideScreenDecorationView(indexPath: itemIndexPath,
+                                               minX: itemMinX,
+                                               maxX: itemMaxX,
+                                               position: position)
+                sectionItemAttributes.append(attributes)
+            }
         }
         
         for resIdx in 0..<allResourceCount {
