@@ -404,26 +404,38 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
             let itemEndTime = endTimeForIndexPath(itemIndexPath)
             let itemResourceIndex = resourceIndexForIndexPath(itemIndexPath)
             let zIndex = zIndexForIndexPath(itemIndexPath)
-            var startHourY = CGFloat(itemStartTime.hour!) * hourHeightForZoomLevel
-            var startMinuteY = CGFloat(itemStartTime.minute!) * minuteHeight
+            var startHourY: CGFloat
+            var startMinuteY: CGFloat
             var endHourY: CGFloat
-            var endMinuteY = CGFloat(itemEndTime.minute!) * minuteHeight
+            var endMinuteY: CGFloat
 
             if itemEndTime.day! != itemStartTime.day! {
+                startHourY = CGFloat(itemStartTime.hour!) * hourHeightForZoomLevel
+                startMinuteY = CGFloat(itemStartTime.minute!) * minuteHeight
                 endHourY = CGFloat(Calendar.current.maximumRange(of: .hour)!.count) * hourHeightForZoomLevel + CGFloat(itemEndTime.hour!) * hourHeightForZoomLevel
+                endMinuteY = CGFloat(itemEndTime.minute!) * minuteHeight
             } else {
-                if itemEndTime.hour! > timelineType.timeRange.upperBound {
+                if itemEndTime.hour! > timelineType.timeRange.upperBound
+                    && itemStartTime.hour! < timelineType.timeRange.upperBound {
                     endHourY = CGFloat(timelineType.timeRange.upperBound) * hourHeightForZoomLevel
                     endMinuteY = 0
                 } else {
                     endHourY = CGFloat(itemEndTime.hour!) * hourHeightForZoomLevel
+                    endMinuteY = CGFloat(itemEndTime.minute!) * minuteHeight
                 }
-                startHourY -= timeRangeLowerOffset
                 endHourY -= timeRangeLowerOffset
                 
-                if startHourY < 0 {
+                if itemStartTime.hour! <= timelineType.timeRange.lowerBound {
                     startHourY = 0
                     startMinuteY = 0
+                } else {
+                    startHourY = CGFloat(itemStartTime.hour!) * hourHeightForZoomLevel
+                    startMinuteY = CGFloat(itemStartTime.minute!) * minuteHeight
+                    startHourY -= timeRangeLowerOffset
+                    if startHourY < 0 {
+                        startHourY = 0
+                        startMinuteY = 0
+                    }
                 }
             }
             
@@ -466,7 +478,12 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
                                                    position: position)
                     sectionItemAttributes.append(attributes)
                 }
-           }
+            } else if startHourY == 0 && endHourY < 0 {
+                addOutsideScreenDecorationView(indexPath: itemIndexPath,
+                                               minX: itemMinX,
+                                               maxX: itemMaxX,
+                                               position: .top)
+            }
         }
         
         for resIdx in 0..<allResourceCount {
@@ -1101,7 +1118,7 @@ extension JZWeekViewFlowLayout {
         
         attributes.zIndex = zIndexForElementKind(JZDecorationViewKinds.outscreenCell)
         
-        let inset: CGFloat = 4
+        let inset: CGFloat = 5
         let height: CGFloat = 5
         let minY: CGFloat
         var frameItem = CGRect.zero
