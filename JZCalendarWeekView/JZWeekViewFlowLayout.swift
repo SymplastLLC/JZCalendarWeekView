@@ -475,6 +475,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
                     addOutsideScreenDecorationView(indexPath: itemIndexPath,
                                                    minX: itemMinX,
                                                    maxX: itemMaxX,
+                                                   y: itemMinY,
                                                    position: position)
                     sectionItemAttributes.append(attributes)
                 }
@@ -482,6 +483,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
                 addOutsideScreenDecorationView(indexPath: itemIndexPath,
                                                minX: itemMinX,
                                                maxX: itemMaxX,
+                                               y: itemMinY,
                                                position: .top)
             }
         }
@@ -1107,6 +1109,7 @@ extension JZWeekViewFlowLayout {
     private func addOutsideScreenDecorationView(indexPath: IndexPath,
                                                 minX: CGFloat,
                                                 maxX: CGFloat,
+                                                y: CGFloat,
                                                 position: OutscreenDecorationViewPosition) {
         guard let collectionView = collectionView else { return }
         
@@ -1130,13 +1133,11 @@ extension JZWeekViewFlowLayout {
         case .top:
             minY = collectionView.contentOffset.y + inset + columnHeaderHeight
             frameItem = CGRect(x: minX, y: minY, width: subsectionWidth, height: height)
+            attributes.zIndex += Int(y)
         case .bottom:
             minY = collectionView.contentOffset.y + collectionView.bounds.height - inset - height
             frameItem = CGRect(x: minX, y: minY, width: subsectionWidth, height: height)
-        }
-        
-        if let maxZIndex = outscreenCellsAttributes.max(by: { $0.value.zIndex > $1.value.zIndex })?.value.zIndex {
-            attributes.zIndex = maxZIndex + 1
+            attributes.zIndex -= Int(y)
         }
         attributes.frame = frameItem
         attributes.alpha = 1
