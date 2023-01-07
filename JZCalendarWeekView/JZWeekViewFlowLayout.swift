@@ -1005,9 +1005,13 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
         }()
         let limitedY = max(min(y, maxLimit), minLimit)
         
-        self.collectionView!.setContentOffsetWithoutDelegate(CGPoint(x: self.collectionView!.contentOffset.x,
-                                                                     y: limitedY),
-                                                             animated: animated)
+        self.collectionView!.setContentOffsetWithoutDelegate(CGPoint(x: self.collectionView!.contentOffset.x, y: limitedY), animated: animated)
+    }
+    
+    open func scrollCollectionViewBit() {
+        var point = collectionView!.contentOffset
+        point.y += 1
+        collectionView!.setContentOffsetWithoutDelegate(point, animated: false)
     }
     
     open func timeForRowHeader(at indexPath: IndexPath) -> Date {
