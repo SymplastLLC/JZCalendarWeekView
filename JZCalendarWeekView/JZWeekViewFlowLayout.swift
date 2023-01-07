@@ -1010,7 +1010,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     
     open func scrollCollectionViewBit() {
         var point = collectionView!.contentOffset
-        point.x += 10
+        point.y += 100
         collectionView!.setContentOffsetWithoutDelegate(point, animated: false)
     }
     
