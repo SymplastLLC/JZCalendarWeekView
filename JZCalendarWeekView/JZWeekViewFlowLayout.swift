@@ -1008,7 +1008,8 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
         self.collectionView!.setContentOffsetWithoutDelegate(CGPoint(x: self.collectionView!.contentOffset.x, y: limitedY), animated: animated)
     }
     
-    open func scrollCollectionViewBit() {
+    /// workaround to fix X position
+    open func fixContentOffset() {
         var point = collectionView!.contentOffset
         point.y += 50
         collectionView!.setContentOffsetWithoutDelegate(point, animated: false)
