@@ -1011,7 +1011,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     open func scrollCollectionViewBit() {
         var point = collectionView!.contentOffset
         point.y += 100
-        collectionView!.setContentOffsetWithoutDelegate(point, animated: false)
+        collectionView!.setContentOffsetWithoutDelegate(point, animated: true)
     }
     
     open func timeForRowHeader(at indexPath: IndexPath) -> Date {
