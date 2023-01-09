@@ -1012,7 +1012,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     open func fixContentOffset() {
         var point = collectionView!.contentOffset
         point.y += 50
-        collectionView!.setContentOffsetWithoutDelegate(point, animated: false)
+        collectionView!.setContentOffsetWithoutDelegate(point, animated: true)
         point.y -= 50
         collectionView!.setContentOffsetWithoutDelegate(point, animated: true)
     }
