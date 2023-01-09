@@ -1011,9 +1011,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     /// workaround to fix X position
     open func fixContentOffset() {
         var point = collectionView!.contentOffset
-        point.y += 50
-        collectionView!.setContentOffsetWithoutDelegate(point, animated: true)
-        point.y -= 50
+        point.y -= 70
         collectionView!.setContentOffsetWithoutDelegate(point, animated: true)
     }
     
