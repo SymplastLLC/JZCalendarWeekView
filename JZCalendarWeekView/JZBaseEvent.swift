@@ -17,6 +17,7 @@ open class JZBaseEvent: NSObject, NSCopying {
     public var isPlaceholder: Bool = false
     public var isCalendarBlock: Bool = false
     public var isAppointment: Bool = false
+    public var isAppointmentPlaceholder: Bool = false
     public var isAppointmentRequest: Bool = false
     public var startDate: Date
     public var endDate: Date
