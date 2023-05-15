@@ -1204,6 +1204,7 @@ extension JZWeekViewFlowLayout {
                 templateAttributes.backgroundColor = area.backgroundColor
                 templateAttributes.isUnavailability = area.isUnavailability
                 templateAttributes.isScheduleTemplate = area.isScheduleTemplate
+                templateAttributes.isDimmed = area.isDimmed
             }
         }
     }

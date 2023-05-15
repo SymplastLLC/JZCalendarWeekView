@@ -32,6 +32,12 @@ open class JZRestrictedAreaView: UICollectionReusableView, TimerThrottle {
     private let insets: CGFloat = 20
 
     private var transparentTimer: Timer?
+    private var isDimmed = false {
+        didSet { updateOpacity() }
+    }
+    private var isTransparent = false {
+        didSet { updateOpacity() }
+    }
 
     // MARK: - lifecycle
     override init(frame: CGRect) {
@@ -68,14 +74,13 @@ open class JZRestrictedAreaView: UICollectionReusableView, TimerThrottle {
     private func setTransparent(_ transparent: Bool) {
         textLabel.isUserInteractionEnabled = !transparent
         UIView.animate(withDuration: 0.2) {
-            self.alpha = transparent ? 0 : 1
+            self.isTransparent = transparent
         }
     }
 
     open override func prepareForReuse() {
         super.prepareForReuse()
 
-        setTransparent(false)
         stopTimer("label_cell_event")
     }
 
@@ -98,6 +103,8 @@ open class JZRestrictedAreaView: UICollectionReusableView, TimerThrottle {
             textLabel.isHidden = true
             layer.borderWidth = 0
             isUserInteractionEnabled = false
+            isTransparent = false
+            isDimmed = false
             return
         }
 
@@ -130,8 +137,13 @@ open class JZRestrictedAreaView: UICollectionReusableView, TimerThrottle {
             textLabel.backgroundColor = UIColor.clear
             layer.borderColor = UIColor.clear.cgColor
         }
+        
+        isDimmed = attributes.isDimmed
     }
 
+    private func updateOpacity() {
+        alpha = isTransparent ? 0 : (isDimmed ? 0.3 : 1)
+    }
 }
 
 #endif
