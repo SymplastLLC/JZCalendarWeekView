@@ -16,7 +16,7 @@ final class JZTemplatesLayoutAttributes: UICollectionViewLayoutAttributes {
     var isUnavailability: Bool?
     var isScheduleTemplate: Bool?
     var labelOffset: Double?
-
+    var isDimmed = false
 }
 
 #endif

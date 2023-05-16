@@ -289,6 +289,7 @@ public struct RestrictedArea: Hashable, Equatable {
     public var timeRange: Range<TimeInterval>
     var title: String?
     var backgroundColor: UIColor?
+    var isDimmed = false
     var isUnavailability: Bool?
     var isScheduleTemplate: Bool?
     var locationId: Int?
@@ -296,12 +297,14 @@ public struct RestrictedArea: Hashable, Equatable {
     public init(timeRange: Range<TimeInterval>,
                 title: String? = nil,
                 backgroundColor: UIColor? = nil,
+                isDimmed: Bool = false,
                 isUnavailability: Bool? = nil,
                 isScheduleTemplate: Bool? = nil,
                 locationId: Int? = nil) {
         self.timeRange = timeRange
         self.title = title
         self.backgroundColor = backgroundColor
+        self.isDimmed = isDimmed
         self.isUnavailability = isUnavailability
         self.isScheduleTemplate = isScheduleTemplate
         self.locationId = locationId
