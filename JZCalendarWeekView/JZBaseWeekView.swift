@@ -94,14 +94,7 @@ open class JZBaseWeekView: UIView {
         }
     }
     public var firstDayOfWeek: DayOfWeek = .sunday
-    public var allEventsBySection: [Date: [JZBaseEvent]] = [:] {
-        didSet {
-            self.isAllDaySupported = allEventsBySection is [Date: [JZAllDayEvent]]
-            if isAllDaySupported {
-                setupAllDayEvents()
-            }
-        }
-    }
+    public var allEventsBySection: [Date: [JZBaseEvent]] = [:]
     public var notAllDayEventsBySection = [Date: [JZAllDayEvent]]()
     public var allDayEventsBySection = [Date: [JZAllDayEvent]]()
     public weak var baseDelegate: JZBaseViewDelegate?
