@@ -70,7 +70,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     /// weekview contentSize height
     open var maxSectionHeight: CGFloat {
         let height = hourHeightForZoomLevel * CGFloat(timelineType.duration) // statement too long for Swift 5 compiler
-        return columnHeaderHeight + height + contentsMargin.top + contentsMargin.bottom + allDayHeaderHeight
+        return columnHeaderHeight + height + contentsMargin.top + contentsMargin.bottom + allDayHeaderHeight + topHeaderHeight
     }
     
     let minOverlayZ = 1000  // Allows for 900 items in a section without z overlap issues
@@ -1155,11 +1155,11 @@ extension JZWeekViewFlowLayout {
             attributes.alpha = 0
             return
         case .top:
-            minY = collectionView.contentOffset.y + inset + columnHeaderHeight
+            minY = collectionView.contentOffset.y + inset + columnHeaderHeight + topHeaderHeight
             frameItem = CGRect(x: minX, y: minY, width: subsectionWidth, height: height)
             attributes.zIndex += Int(y)
         case .bottom:
-            minY = collectionView.contentOffset.y + collectionView.bounds.height - inset - height
+            minY = collectionView.contentOffset.y + collectionView.bounds.height - inset - height - 20
             frameItem = CGRect(x: minX, y: minY, width: subsectionWidth, height: height)
             attributes.zIndex -= Int(y)
         }
