@@ -168,8 +168,8 @@ open class JZBaseWeekView: UIView {
         collectionView.registerSupplimentaryViews([JZColumnHeader.self,
                                                    JZCornerHeader.self,
                                                    JZRowHeader.self,
-                                                   JZAllDayHeader.self])
-        
+                                                   JZAllDayHeader.self,
+                                                   JZTopHeaderView.self])
         // decoration
         flowLayout.registerDecorationViews([JZColumnHeaderBackground.self, JZRowHeaderBackground.self,
                                             JZAllDayHeaderBackground.self, JZAllDayCorner.self])
@@ -616,6 +616,10 @@ extension JZBaseWeekView: UICollectionViewDataSource {
         var view = UICollectionReusableView()
 
         switch kind {
+        case JZSupplementaryViewKinds.topHeader:
+            if let topHeader = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: kind, for: indexPath) as? JZTopHeaderView {
+                view = topHeader
+            }
         case JZSupplementaryViewKinds.columnHeader:
             if let columnHeader = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: kind, for: indexPath) as? JZColumnHeader {
                 columnHeader.updateView(date: flowLayout.dateForColumnHeader(at: indexPath))
@@ -649,7 +653,6 @@ extension JZBaseWeekView: UICollectionViewDataSource {
         }
         return view
     }
-
 }
 
 // MARK: - UICollectionViewDelegate: UIScrollViewDelegate for Pagination Effect
@@ -737,7 +740,11 @@ extension JZBaseWeekView: UICollectionViewDelegate, UICollectionViewDelegateFlow
             collectionView.contentOffset.x = rightLock
         }
     }
-
+    
+    public func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
+        CGSize(width: collectionView.frame.width, height: 100)
+    }
+    
     private func paginationEffect(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
         let currentContentOffset = scrollView.contentOffset
         let pageWidth: CGFloat = scrollType == .sectionScroll ? flowLayout.sectionWidth : contentViewWidth
