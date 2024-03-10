@@ -1159,7 +1159,7 @@ extension JZWeekViewFlowLayout {
             frameItem = CGRect(x: minX, y: minY, width: subsectionWidth, height: height)
             attributes.zIndex += Int(y)
         case .bottom:
-            minY = collectionView.contentOffset.y + collectionView.bounds.height - inset - height - 20
+            minY = collectionView.contentOffset.y + collectionView.bounds.height - inset - height
             frameItem = CGRect(x: minX, y: minY, width: subsectionWidth, height: height)
             attributes.zIndex -= Int(y)
         }
