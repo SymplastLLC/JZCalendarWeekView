@@ -1048,7 +1048,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     // MARK: - z index
     open func zIndexForElementKind(_ kind: String, withOffset: Int = 1) -> Int {
         switch kind {
-        case JZSupplementaryViewKinds.cornerHeader, JZDecorationViewKinds.allDayCorner:
+        case JZSupplementaryViewKinds.cornerHeader, JZDecorationViewKinds.allDayCorner, JZSupplementaryViewKinds.topHeader:
             return minOverlayZ + 11
         case JZSupplementaryViewKinds.allDayHeader:
             return minOverlayZ + 10
@@ -1066,7 +1066,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
             return minOverlayZ + 4
         case JZDecorationViewKinds.horizontalGridline:
             return minBackgroundZ + 3
-        case JZDecorationViewKinds.verticalGridline, JZSupplementaryViewKinds.topHeader:
+        case JZDecorationViewKinds.verticalGridline:
             return minBackgroundZ + 2
         case JZDecorationViewKinds.outscreenCell:
             return minCellZ + 41
