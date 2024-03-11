@@ -37,7 +37,7 @@ public class JZCollectionView: UICollectionView {
 
     public func registerSupplimentaryViews(_ viewClasses: [UICollectionReusableView.Type]) {
         viewClasses.forEach {
-            self.register($0, forSupplementaryViewOfKind: $0.className, withReuseIdentifier: $0.className)
+            register($0, forSupplementaryViewOfKind: $0.className, withReuseIdentifier: $0.className)
         }
     }
 

@@ -11,6 +11,7 @@
 import UIKit
 
 public enum JZSupplementaryViewKinds {
+    public static let topHeader =  JZTopHeaderView.className
     public static let columnHeader = JZColumnHeader.className
     public static let rowHeader = JZRowHeader.className
     public static let cornerHeader = JZCornerHeader.className
