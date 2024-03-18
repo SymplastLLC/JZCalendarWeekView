@@ -1098,11 +1098,11 @@ extension JZWeekViewFlowLayout {
         
         let text: String?
         switch hourGridDivision {
-        case .minutes_30:
+        case .minutes_30 where division.isMultiple(of: 1):
             text = ":\(hourGridDivision.rawValue)"
-        case .minutes_15 where division % 2 == 0:
+        case .minutes_15 where division.isMultiple(of: 2):
             text = ":\(hourGridDivision.rawValue * division)"
-        case .minutes_5 where division % 3 == 0:
+        case .minutes_5 where division.isMultiple(of: 3):
             text = ":\(hourGridDivision.rawValue * division)"
         default:
             text = nil
@@ -1116,6 +1116,7 @@ extension JZWeekViewFlowLayout {
         attributes.frame = CGRect(x: startX, y: attributeY, width: rowHeaderWidth - 4, height: defaultRowHeaderDividerHeight)
         attributes.alpha = 1
         attributes.zIndex = zIndexForElementKind(JZDecorationViewKinds.rowHeaderDivider)
+        attributes.isHidden = text == nil
     }
 }
 

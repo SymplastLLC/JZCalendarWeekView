@@ -36,8 +36,11 @@ open class JZRowDividerHorizontalHeader: UICollectionReusableView {
 
     open override func apply(_ layoutAttributes: UICollectionViewLayoutAttributes) {
         super.apply(layoutAttributes)
-
-        if let attributes = layoutAttributes as? JZDividerLayoutAttributes, attributes.text?.isEmpty == false {
+        
+        timeLabel.text = nil
+        if let attributes = layoutAttributes as? JZDividerLayoutAttributes,
+           let text = attributes.text,
+           !text.isEmpty {
             isHidden = false
             timeLabel.text = attributes.text
         } else {
