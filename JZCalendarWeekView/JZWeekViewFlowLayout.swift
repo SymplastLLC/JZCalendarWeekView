@@ -907,12 +907,12 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
         restrictedAreasAttributes.removeAll()
         rowHeaderDividerHorizontalAttributes.removeAll()
         
-        // workaround to fix https://symplastdev.visualstudio.com/Symplast/_workitems/edit/101247
-        for subview in collectionView?.subviews ?? [] {
-            if subview is JZRowDividerHorizontalHeader {
-                subview.removeFromSuperview()
-            }
-        }
+//        // workaround to fix https://symplastdev.visualstudio.com/Symplast/_workitems/edit/101247
+//        for subview in collectionView?.subviews ?? [] {
+//            if subview is JZRowDividerHorizontalHeader {
+//                subview.removeFromSuperview()
+//            }
+//        }
         
         topHeaderAttributes.removeAll()
     }
@@ -1123,6 +1123,7 @@ extension JZWeekViewFlowLayout {
         attributes.frame = CGRect(x: startX, y: attributeY, width: rowHeaderWidth - 4, height: defaultRowHeaderDividerHeight)
         attributes.alpha = 1
         attributes.zIndex = zIndexForElementKind(JZDecorationViewKinds.rowHeaderDivider)
+        attributes.isHidden = text == nil
     }
 }
 

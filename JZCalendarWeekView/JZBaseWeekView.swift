@@ -238,9 +238,8 @@ open class JZBaseWeekView: UIView {
                                                        weekView: self,
                                                        needRefresh: false)
                 layoutSubviews()
-                //forceReload()
+                forceReload()
                 updateFlowLayout(flowLayout)
-                collectionView.reloadData()
             }
         }
     }
