@@ -1184,7 +1184,7 @@ extension JZWeekViewFlowLayout {
                                                areas: Set<RestrictedArea>) {
         guard collectionView != nil else { return }
         
-        let calendarGridMinY = columnHeaderHeight + contentsMargin.top + allDayHeaderHeight
+        let calendarGridMinY = columnHeaderHeight + contentsMargin.top + allDayHeaderHeight + topHeaderHeight
         
         func yForSeconds(_ seconds: TimeInterval) -> CGFloat {
             CGFloat(seconds / 60) * minuteHeight
