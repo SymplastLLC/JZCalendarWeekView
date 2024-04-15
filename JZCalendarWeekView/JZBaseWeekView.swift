@@ -115,7 +115,7 @@ open class JZBaseWeekView: UIView {
         frameWidth - flowLayout.rowHeaderWidth - flowLayout.contentsMargin.left - flowLayout.contentsMargin.right
     }
     open var contentViewHeight: CGFloat {
-        frame.height - flowLayout.allDayHeaderHeight - flowLayout.contentsMargin.top - flowLayout.contentsMargin.bottom - flowLayout.columnHeaderHeight - safeAreaInsets.bottom
+        frame.height - flowLayout.allDayHeaderHeight - flowLayout.contentsMargin.top - flowLayout.contentsMargin.bottom - flowLayout.topHeaderHeight - flowLayout.columnHeaderHeight - safeAreaInsets.bottom
     }
     private var isFirstAppear: Bool = true
     public var isAllDaySupported: Bool = false
@@ -427,9 +427,10 @@ open class JZBaseWeekView: UIView {
         let components = Calendar.current.dateComponents([.hour, .minute], from: time)
         let hour = CGFloat(components.hour!) + CGFloat(components.minute!) / 60
         let setTimeY = hour * flowLayout.hourHeightForZoomLevel + flowLayout.contentsMargin.top
-        let maxOffsetY = collectionView.contentSize.height - collectionView.frame.height + flowLayout.columnHeaderHeight + flowLayout.allDayHeaderHeight + flowLayout.contentsMargin.bottom + flowLayout.contentsMargin.top
+        let maxOffsetY = collectionView.contentSize.height - collectionView.frame.height + flowLayout.columnHeaderHeight + flowLayout.allDayHeaderHeight + flowLayout.contentsMargin.bottom + flowLayout.contentsMargin.top + flowLayout.topHeaderHeight
         collectionView.setContentOffsetWithoutDelegate(CGPoint(x: collectionView.contentOffset.x,
-                                                               y: max(0, min(setTimeY, maxOffsetY))), animated: false)
+                                                               y: max(0, min(setTimeY, maxOffsetY))),
+                                                       animated: false)
     }
 
     /// Get current event with item indexPath
@@ -542,7 +543,7 @@ open class JZBaseWeekView: UIView {
         var adjustedY = yCollectionView - flowLayout.columnHeaderHeight - flowLayout.contentsMargin.top - flowLayout.allDayHeaderHeight
         let minY: CGFloat = 0
         // contentSize includes all reusableView, margin and scrollable area
-        let maxY = collectionView.contentSize.height - flowLayout.contentsMargin.top - flowLayout.contentsMargin.bottom - flowLayout.allDayHeaderHeight - flowLayout.columnHeaderHeight + flowLayout.timeRangeLowerOffset
+        let maxY = collectionView.contentSize.height - flowLayout.contentsMargin.top - flowLayout.contentsMargin.bottom - flowLayout.allDayHeaderHeight - flowLayout.columnHeaderHeight - flowLayout.topHeaderHeight + flowLayout.timeRangeLowerOffset
         adjustedY = max(minY, min(adjustedY, maxY))
         var hour = Int(adjustedY / flowLayout.hourHeightForZoomLevel)
         if timelineRange != .full {
