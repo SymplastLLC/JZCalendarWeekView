@@ -442,7 +442,8 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
                 
                 if itemStartTime.hour! <= timelineType.timeRange.lowerBound {
                     startHourY = 0
-                    if itemStartTime.minute! >= 0 {
+                    if itemStartTime.hour! == timelineType.timeRange.lowerBound
+                        && itemStartTime.minute! >= 0 {
                         startMinuteY = CGFloat(itemStartTime.minute!) * minuteHeight
                     } else {
                         startMinuteY = 0
