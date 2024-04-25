@@ -543,7 +543,7 @@ open class JZBaseWeekView: UIView {
         var adjustedY = yCollectionView - flowLayout.columnHeaderHeight - flowLayout.contentsMargin.top - flowLayout.allDayHeaderHeight
         let minY: CGFloat = 0
         // contentSize includes all reusableView, margin and scrollable area
-        let maxY = collectionView.contentSize.height - flowLayout.contentsMargin.top - flowLayout.contentsMargin.bottom - flowLayout.allDayHeaderHeight - flowLayout.columnHeaderHeight + flowLayout.timeRangeLowerOffset
+        let maxY = collectionView.contentSize.height - flowLayout.contentsMargin.top - flowLayout.contentsMargin.bottom - flowLayout.allDayHeaderHeight - flowLayout.columnHeaderHeight - flowLayout.topHeaderHeight + flowLayout.timeRangeLowerOffset
         adjustedY = max(minY, min(adjustedY, maxY))
         var hour = Int(adjustedY / flowLayout.hourHeightForZoomLevel)
         if timelineRange != .full {
