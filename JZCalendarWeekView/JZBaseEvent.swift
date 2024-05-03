@@ -32,6 +32,7 @@ open class JZBaseEvent: NSObject, NSCopying {
     public var isHiddenCalendarBlockOptions = false
     public var isDimmed = false
     public var inParkingLot = false
+    public var parkingLotTitle: String?
     
     @available(*, deprecated, message: "Use the 'data' property instead this!")
     public var appointmentRequest: Any?
