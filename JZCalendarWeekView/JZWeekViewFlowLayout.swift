@@ -854,8 +854,12 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     /// Refer to the previous algorithm but integrated with groups
     /// - Parameter items: All the items(cells) in the UICollectionView
     /// - Returns: maxOverlapIntervalCount and all the maximum overlap groups
-    func groupOverlapItems(items: [UICollectionViewLayoutAttributes]) -> (maxOverlapIntervalCount: Int, overlapGroups: [[UICollectionViewLayoutAttributes]]) {
+    func groupOverlapItems(
+        items: [UICollectionViewLayoutAttributes]
+    ) -> (maxOverlapIntervalCount: Int, overlapGroups: [[UICollectionViewLayoutAttributes]]) {
         var maxOverlap = 0, currentOverlap = 0
+        
+        // Sort items by minY and maxY for processing
         let sortedMinYItems = items.sorted { $0.frame.minY < $1.frame.minY }
         let sortedMaxYItems = items.sorted { $0.frame.maxY < $1.frame.maxY }
         let itemCount = items.count
@@ -864,26 +868,48 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
         var overlapGroups = [[UICollectionViewLayoutAttributes]]()
         var currentOverlapGroup = [UICollectionViewLayoutAttributes]()
         var shouldAppendToOverlapGroups: Bool = false
+        
+        // The main loop to process all items
         while i < itemCount && j < itemCount {
+            // Check which comes first: a new item starting or a current item ending
             if sortedMinYItems[i].frame.minY < sortedMaxYItems[j].frame.maxY {
+                // A new item is starting, increment overlap count
                 currentOverlap += 1
                 maxOverlap = max(maxOverlap, currentOverlap)
                 shouldAppendToOverlapGroups = true
+                
+                // Add the item to the current group
                 currentOverlapGroup.append(sortedMinYItems[i])
                 i += 1
             } else {
+                // An item is ending, decrement overlap count
                 currentOverlap -= 1
-                // should not append to group with continuous minus
+                
+                // Fix: Only consider appending the group when we're at a boundary point
+                // where an overlap is ending
                 if shouldAppendToOverlapGroups {
-                    if currentOverlapGroup.count > 1 { overlapGroups.append(currentOverlapGroup) }
+                    // Only add groups that have more than one item
+                    if currentOverlapGroup.count > 1 {
+                        overlapGroups.append(currentOverlapGroup)
+                    }
+                    // Reset for next group
+                    currentOverlapGroup = []
                     shouldAppendToOverlapGroups = false
                 }
-                currentOverlapGroup.removeAll { $0 == sortedMaxYItems[j] }
+                
+                // Fix: Need to check if this is the item we're finishing
+                if sortedMaxYItems[j].frame == currentOverlapGroup.last?.frame {
+                    currentOverlapGroup.removeAll { $0 == sortedMaxYItems[j] }
+                }
                 j += 1
             }
         }
-        // Add last currentOverlapGroup
-        if currentOverlapGroup.count > 1 { overlapGroups.append(currentOverlapGroup) }
+        
+        // Don't forget to add the last overlap group if it has items
+        if currentOverlapGroup.count > 1 {
+            overlapGroups.append(currentOverlapGroup)
+        }
+        
         return (maxOverlap, overlapGroups)
     }
     
