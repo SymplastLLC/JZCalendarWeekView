@@ -857,57 +857,50 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     func groupOverlapItems(
         items: [UICollectionViewLayoutAttributes]
     ) -> (maxOverlapIntervalCount: Int, overlapGroups: [[UICollectionViewLayoutAttributes]]) {
-        var maxOverlap = 0, currentOverlap = 0
+        guard !items.isEmpty else { return (0, []) }
         
-        // Sort items by minY and maxY for processing
-        let sortedMinYItems = items.sorted { $0.frame.minY < $1.frame.minY }
-        let sortedMaxYItems = items.sorted { $0.frame.maxY < $1.frame.maxY }
-        let itemCount = items.count
+        // Sort items by start time (minY)
+        let sortedItems = items.sorted { $0.frame.minY < $1.frame.minY }
+        var overlapGroups: [[UICollectionViewLayoutAttributes]] = []
+        var processedItems = Set<UICollectionViewLayoutAttributes>()
+        var maxOverlap = 0
         
-        var i = 0, j = 0
-        var overlapGroups = [[UICollectionViewLayoutAttributes]]()
-        var currentOverlapGroup = [UICollectionViewLayoutAttributes]()
-        var shouldAppendToOverlapGroups: Bool = false
-        
-        // The main loop to process all items
-        while i < itemCount && j < itemCount {
-            // Check which comes first: a new item starting or a current item ending
-            if sortedMinYItems[i].frame.minY < sortedMaxYItems[j].frame.maxY {
-                // A new item is starting, increment overlap count
-                currentOverlap += 1
-                maxOverlap = max(maxOverlap, currentOverlap)
-                shouldAppendToOverlapGroups = true
+        for item in sortedItems {
+            // Skip if this item is already in a group
+            if processedItems.contains(item) { continue }
+            
+            // Start a new group with this item
+            var currentGroup = [item]
+            processedItems.insert(item)
+            
+            // Find all items that overlap with current group
+            var didAddItems = true
+            while didAddItems {
+                didAddItems = false
                 
-                // Add the item to the current group
-                currentOverlapGroup.append(sortedMinYItems[i])
-                i += 1
-            } else {
-                // An item is ending, decrement overlap count
-                currentOverlap -= 1
-                
-                // Fix: Only consider appending the group when we're at a boundary point
-                // where an overlap is ending
-                if shouldAppendToOverlapGroups {
-                    // Only add groups that have more than one item
-                    if currentOverlapGroup.count > 1 {
-                        overlapGroups.append(currentOverlapGroup)
+                for potentialItem in sortedItems {
+                    // Skip if already processed
+                    if processedItems.contains(potentialItem) { continue }
+                    
+                    // Check if it overlaps with any item in current group
+                    let overlapsWithGroup = currentGroup.contains { groupItem in
+                        return (potentialItem.frame.minY < groupItem.frame.maxY &&
+                                potentialItem.frame.maxY > groupItem.frame.minY)
                     }
-                    // Reset for next group
-                    currentOverlapGroup = []
-                    shouldAppendToOverlapGroups = false
+                    
+                    if overlapsWithGroup {
+                        currentGroup.append(potentialItem)
+                        processedItems.insert(potentialItem)
+                        didAddItems = true
+                    }
                 }
-                
-                // Fix: Need to check if this is the item we're finishing
-                if sortedMaxYItems[j].frame == currentOverlapGroup.last?.frame {
-                    currentOverlapGroup.removeAll { $0 == sortedMaxYItems[j] }
-                }
-                j += 1
             }
-        }
-        
-        // Don't forget to add the last overlap group if it has items
-        if currentOverlapGroup.count > 1 {
-            overlapGroups.append(currentOverlapGroup)
+            
+            // Only add groups with multiple items
+            if currentGroup.count > 1 {
+                overlapGroups.append(currentGroup)
+                maxOverlap = max(maxOverlap, currentGroup.count)
+            }
         }
         
         return (maxOverlap, overlapGroups)
