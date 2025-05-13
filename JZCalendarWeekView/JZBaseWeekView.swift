@@ -41,7 +41,7 @@ open class JZBaseWeekView: UIView {
         return collectionView
     }()
 
-    public var timelineRange: TimelineConfiguration.TimelineType = .range(9...17) {
+    public var timelineRange: TimelineConfiguration.TimelineType = .full {
         didSet {
             flowLayout.timelineType = timelineRange
         }
