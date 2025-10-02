@@ -225,6 +225,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     // MARK: - UICollectionViewLayout
     
     override open func finalizeCollectionViewUpdates() {
+        print("🏁 finalizeCollectionViewUpdates")
         for subview in (collectionView?.subviews ?? []) {
             for decorationViewClass in registeredDecorationClasses.values {
                 if subview.isKind(of: decorationViewClass) {
@@ -1167,8 +1168,9 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     
     // MARK: - Section sizing
     open func rectForSection(_ section: Int) -> CGRect {
-        CGRect(x: rowHeaderWidth + sectionWidth * CGFloat(section), y: 0,
-               width: sectionWidth, height: collectionViewContentSize.height)
+        guard let collectionView = collectionView else { return CGRect.zero }
+        return CGRect(x: rowHeaderWidth + sectionWidth * CGFloat(section), y: 0,
+                      width: sectionWidth, height: collectionViewContentSize.height)
     }
     
     // MARK: - Delegate Wrapper
