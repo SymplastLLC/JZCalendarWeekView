@@ -438,7 +438,12 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
             longPressView.center = CGPoint(x: pointInSelfView.x - pressPosition!.xToViewLeft + currentEditingInfo.cellSize.width/2,
                                            y: pointInSelfView.y - pressPosition!.yToViewTop + currentEditingInfo.cellSize.height/2)
             if currentLongPressType == .move {
-                currentEditingInfo.event = (currentMovingCell as! JZLongPressEventCell).event
+                if let cell = currentMovingCell as? JZLongPressEventCell {
+                    currentEditingInfo.event = cell.event
+                } else {
+                    // Fallback: create a temporary event if cast fails
+                    currentEditingInfo.event = JZBaseEvent(id: "temp", startDate: Date(), endDate: Date())
+                }
                 getCurrentMovingCells().forEach {
                     $0.contentView.layer.opacity = movingCellOpacity
                     currentEditingInfo.allOpacityContentViews.append($0.contentView)
