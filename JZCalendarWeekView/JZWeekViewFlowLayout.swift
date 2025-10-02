@@ -613,7 +613,8 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
                 
             let sectionIndexes = NSIndexSet(indexesIn: NSRange(location: indexPath.section, length: 1))
             prepareHorizontalTileSectionLayoutForSections(sectionIndexes)
-            return itemAttributes[indexPath] == nil ? UICollectionViewLayoutAttributes() : itemAttributes[indexPath]
+            let item = itemAttributes[indexPath] ?? layoutAttributesForCell(at: indexPath, withItemCache: itemAttributes).1[indexPath]
+            return item
         }
         
         return attrs
