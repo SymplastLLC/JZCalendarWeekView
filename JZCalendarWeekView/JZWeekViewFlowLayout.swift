@@ -205,15 +205,6 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     }
     
     // MARK: - UICollectionViewLayout
-    override open func prepare(forCollectionViewUpdates updateItems: [UICollectionViewUpdateItem]) {
-        print("⚡ prepare(forCollectionViewUpdates) with \(updateItems.count) items")
-        for item in updateItems {
-            print("⚡ Update item: \(item.updateAction) at \(item.indexPathBeforeUpdate ?? item.indexPathAfterUpdate ?? IndexPath())")
-        }
-        invalidateLayoutCache()
-        prepare()
-        super.prepare(forCollectionViewUpdates: updateItems)
-    }
     
     override open func finalizeCollectionViewUpdates() {
         print("🏁 finalizeCollectionViewUpdates")
@@ -615,6 +606,49 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     }
     
     // MARK: - Layout
+    override open func layoutAttributesForItem(at indexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
+        // MARK: - Layout
+        let attrs = itemAttributes[indexPath]
+        if attrs == nil {
+            // Defensive: if no cached attributes exist, try to prepare layout for this section
+            guard let collectionView = collectionView else { return nil }
+            // Check if this indexPath is valid
+            if indexPath.section >= collectionView.numberOfSections {
+                return nil
+            }
+            
+                if indexPath.item >= collectionView.numberOfItems(inSection: indexPath.section) {
+                    return nil
+                }
+                
+            let sectionIndexes = NSIndexSet(indexesIn: NSRange(location: indexPath.section, length: 1))
+            prepareHorizontalTileSectionLayoutForSections(sectionIndexes)
+            return itemAttributes[indexPath] == nil ? UICollectionViewLayoutAttributes() : itemAttributes[indexPath]
+        }
+        
+        return attrs
+    }
+    
+        override open func layoutAttributesForSupplementaryView(ofKind elementKind: String, at indexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
+            super.layoutAttributesForSupplementaryView(ofKind: elementKind, at: indexPath)
+            return switch elementKind {
+            case JZSupplementaryViewKinds.columnHeader:
+                columnHeaderAttributes[indexPath]
+            case JZSupplementaryViewKinds.rowHeader:
+                rowHeaderAttributes[indexPath]
+            case JZSupplementaryViewKinds.cornerHeader:
+                cornerHeaderAttributes[indexPath]
+            case JZSupplementaryViewKinds.allDayHeader:
+                allDayHeaderAttributes[indexPath]
+            case JZSupplementaryViewKinds.currentTimeline:
+                currentTimeLineAttributes[indexPath]
+            case UICollectionView.elementKindSectionHeader:
+                topHeaderAttributes[indexPath]
+            default:
+                nil
+            }
+        }
+        
     
     override open func layoutAttributesForDecorationView(ofKind elementKind: String, at indexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
         switch elementKind {
