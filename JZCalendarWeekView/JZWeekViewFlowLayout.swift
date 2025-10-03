@@ -615,47 +615,6 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     }
     
     // MARK: - Layout
-    override open func layoutAttributesForItem(at indexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
-        let attrs = itemAttributes[indexPath]
-        if attrs == nil {
-            // Defensive: if no cached attributes exist, try to prepare layout for this section
-            guard let collectionView = collectionView else { return nil }
-            
-            // Check if this indexPath is valid
-            if indexPath.section >= collectionView.numberOfSections {
-                return nil
-            }
-            
-            if indexPath.item >= collectionView.numberOfItems(inSection: indexPath.section) {
-                return nil
-            }
-            
-            let sectionIndexes = NSIndexSet(indexesIn: NSRange(location: indexPath.section, length: 1))
-            prepareHorizontalTileSectionLayoutForSections(sectionIndexes)
-            
-            return itemAttributes[indexPath]
-        }
-        return attrs
-    }
-    
-    override open func layoutAttributesForSupplementaryView(ofKind elementKind: String, at indexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
-        switch elementKind {
-        case JZSupplementaryViewKinds.columnHeader:
-            columnHeaderAttributes[indexPath]
-        case JZSupplementaryViewKinds.rowHeader:
-            rowHeaderAttributes[indexPath]
-        case JZSupplementaryViewKinds.cornerHeader:
-            cornerHeaderAttributes[indexPath]
-        case JZSupplementaryViewKinds.allDayHeader:
-            allDayHeaderAttributes[indexPath]
-        case JZSupplementaryViewKinds.currentTimeline:
-            currentTimeLineAttributes[indexPath]
-        case UICollectionView.elementKindSectionHeader:
-            topHeaderAttributes[indexPath]
-        default:
-            nil
-        }
-    }
     
     override open func layoutAttributesForDecorationView(ofKind elementKind: String, at indexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
         switch elementKind {
