@@ -123,24 +123,42 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     
     typealias AttDic = [IndexPath: UICollectionViewLayoutAttributes]
     
-    var allAttributes = [UICollectionViewLayoutAttributes]()
-    var itemAttributes = AttDic()
-    var columnHeaderAttributes = AttDic()
-    var columnHeaderBackgroundAttributes = AttDic()
-    var rowHeaderAttributes = AttDic()
-    var rowHeaderBackgroundAttributes = AttDic()
-    var verticalGridlineAttributes = AttDic()
-    var horizontalGridlineAttributes = AttDic()
-    var cornerHeaderAttributes = AttDic()
-    var currentTimeLineAttributes = AttDic()
-    private var outscreenCellsAttributes = AttDic()
+    private var allAttributes: [UICollectionViewLayoutAttributes] {
+        [itemAttributes,
+         columnHeaderAttributes,
+         columnHeaderBackgroundAttributes,
+         rowHeaderAttributes,
+         rowHeaderBackgroundAttributes,
+         verticalGridlineAttributes,
+         horizontalGridlineAttributes,
+         cornerHeaderAttributes,
+         currentTimeLineAttributes,
+         outScreenCellsAttributes,
+         restrictedAreasAttributes,
+         rowHeaderDividerHorizontalAttributes,
+         topHeaderAttributes,
+         allDayHeaderAttributes,
+         allDayHeaderBackgroundAttributes,
+         allDayCornerAttributes].flatMap(\.values)
+    }
+    
+    private var itemAttributes = AttDic()
+    private var columnHeaderAttributes = AttDic()
+    private var columnHeaderBackgroundAttributes = AttDic()
+    private var rowHeaderAttributes = AttDic()
+    private var rowHeaderBackgroundAttributes = AttDic()
+    private var verticalGridlineAttributes = AttDic()
+    private var horizontalGridlineAttributes = AttDic()
+    private var cornerHeaderAttributes = AttDic()
+    private var currentTimeLineAttributes = AttDic()
+    private var outScreenCellsAttributes = AttDic()
     private var restrictedAreasAttributes = AttDic()
     private var rowHeaderDividerHorizontalAttributes = AttDic()
     private var topHeaderAttributes = AttDic()
     
-    var allDayHeaderAttributes = AttDic()
-    var allDayHeaderBackgroundAttributes = AttDic()
-    var allDayCornerAttributes = AttDic()
+    private var allDayHeaderAttributes = AttDic()
+    private var allDayHeaderBackgroundAttributes = AttDic()
+    private var allDayCornerAttributes = AttDic()
     
     weak var delegate: WeekViewFlowLayoutDelegate?
     private var minuteTimer: Timer?
@@ -239,33 +257,6 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
             guard let collectionView = collectionView else { return }
             prepareHorizontalTileSectionLayoutForSections(NSIndexSet(indexesIn: NSRange(location: 0, length: collectionView.numberOfSections)))
             needsToPopulateAttributesForAllSections = false
-        }
-        
-        let needsToPopulateAllAttributes = (allAttributes.count == 0)
-        
-        if needsToPopulateAllAttributes {
-            allAttributes.append(contentsOf: columnHeaderAttributes.values)
-            allAttributes.append(contentsOf: columnHeaderBackgroundAttributes.values)
-            allAttributes.append(contentsOf: rowHeaderAttributes.values)
-            allAttributes.append(contentsOf: rowHeaderBackgroundAttributes.values)
-            allAttributes.append(contentsOf: verticalGridlineAttributes.values)
-            allAttributes.append(contentsOf: horizontalGridlineAttributes.values)
-            allAttributes.append(contentsOf: cornerHeaderAttributes.values)
-            allAttributes.append(contentsOf: currentTimeLineAttributes.values)
-            allAttributes.append(contentsOf: itemAttributes.values)
-            
-            allAttributes.append(contentsOf: allDayCornerAttributes.values)
-            allAttributes.append(contentsOf: allDayHeaderAttributes.values)
-            allAttributes.append(contentsOf: allDayHeaderBackgroundAttributes.values)
-            allAttributes.append(contentsOf: outscreenCellsAttributes.values)
-            allAttributes.append(contentsOf: restrictedAreasAttributes.values)
-            allAttributes.append(contentsOf: rowHeaderDividerHorizontalAttributes.values)
-            
-            allAttributes.append(contentsOf: topHeaderAttributes.values)
-        } else {
-            // Update item attributes in allAttributes when they change
-            allAttributes.removeAll(where: { $0.representedElementCategory == .cell })
-            allAttributes.append(contentsOf: itemAttributes.values)
         }
     }
     
@@ -652,27 +643,27 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
         
     
     override open func layoutAttributesForDecorationView(ofKind elementKind: String, at indexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
-        switch elementKind {
+        return switch elementKind {
         case JZDecorationViewKinds.verticalGridline:
-            return verticalGridlineAttributes[indexPath]
+            verticalGridlineAttributes[indexPath]
         case JZDecorationViewKinds.horizontalGridline:
-            return horizontalGridlineAttributes[indexPath]
+            horizontalGridlineAttributes[indexPath]
         case JZDecorationViewKinds.rowHeaderBackground:
-            return rowHeaderBackgroundAttributes[indexPath]
+            rowHeaderBackgroundAttributes[indexPath]
         case JZDecorationViewKinds.columnHeaderBackground:
-            return columnHeaderBackgroundAttributes[indexPath]
+            columnHeaderBackgroundAttributes[indexPath]
         case JZDecorationViewKinds.allDayHeaderBackground:
-            return allDayHeaderBackgroundAttributes[indexPath]
+            allDayHeaderBackgroundAttributes[indexPath]
         case JZDecorationViewKinds.allDayCorner:
-            return allDayCornerAttributes[indexPath]
-        case JZDecorationViewKinds.outscreenCell:
-            return outscreenCellsAttributes[indexPath]
+            allDayCornerAttributes[indexPath]
+        case JZDecorationViewKinds.outScreenCell:
+            outScreenCellsAttributes[indexPath]
         case JZDecorationViewKinds.restrictedArea:
-            return restrictedAreasAttributes[indexPath]
+            restrictedAreasAttributes[indexPath]
         case JZDecorationViewKinds.rowHeaderDivider:
-            return rowHeaderDividerHorizontalAttributes[indexPath]
+            rowHeaderDividerHorizontalAttributes[indexPath]
         default:
-            return nil
+            nil
         }
     }
     
@@ -778,7 +769,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
             case JZDecorationViewKinds.columnHeaderBackground: return columnHeaderBackgroundAttributes[decorationIndexPath]
             case JZDecorationViewKinds.allDayHeaderBackground: return allDayHeaderBackgroundAttributes[decorationIndexPath]
             case JZDecorationViewKinds.allDayCorner: return allDayCornerAttributes[decorationIndexPath]
-            case JZDecorationViewKinds.outscreenCell: return outscreenCellsAttributes[decorationIndexPath]
+            case JZDecorationViewKinds.outScreenCell: return outScreenCellsAttributes[decorationIndexPath]
             case JZDecorationViewKinds.restrictedArea: return restrictedAreasAttributes[decorationIndexPath]
             case JZDecorationViewKinds.rowHeaderDivider: return rowHeaderDividerHorizontalAttributes[decorationIndexPath]
             default: return nil
@@ -809,7 +800,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
             case JZDecorationViewKinds.columnHeaderBackground: return columnHeaderBackgroundAttributes[decorationIndexPath]
             case JZDecorationViewKinds.allDayHeaderBackground: return allDayHeaderBackgroundAttributes[decorationIndexPath]
             case JZDecorationViewKinds.allDayCorner: return allDayCornerAttributes[decorationIndexPath]
-            case JZDecorationViewKinds.outscreenCell: return outscreenCellsAttributes[decorationIndexPath]
+            case JZDecorationViewKinds.outScreenCell: return outScreenCellsAttributes[decorationIndexPath]
             case JZDecorationViewKinds.restrictedArea: return restrictedAreasAttributes[decorationIndexPath]
             case JZDecorationViewKinds.rowHeaderDivider: return rowHeaderDividerHorizontalAttributes[decorationIndexPath]
             default: return nil
@@ -1113,12 +1104,11 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
         rowHeaderBackgroundAttributes.removeAll()
         cornerHeaderAttributes.removeAll()
         itemAttributes.removeAll()
-        allAttributes.removeAll()
         
         allDayHeaderAttributes.removeAll()
         allDayHeaderBackgroundAttributes.removeAll()
         allDayCornerAttributes.removeAll()
-        outscreenCellsAttributes.removeAll()
+        outScreenCellsAttributes.removeAll()
         restrictedAreasAttributes.removeAll()
         rowHeaderDividerHorizontalAttributes.removeAll()
         
@@ -1167,9 +1157,8 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     
     // MARK: - Section sizing
     open func rectForSection(_ section: Int) -> CGRect {
-        guard let collectionView = collectionView else { return CGRect.zero }
-        return CGRect(x: rowHeaderWidth + sectionWidth * CGFloat(section), y: 0,
-                      width: sectionWidth, height: collectionViewContentSize.height)
+        CGRect(x: rowHeaderWidth + sectionWidth * CGFloat(section), y: 0,
+               width: sectionWidth, height: collectionViewContentSize.height)
     }
     
     // MARK: - Delegate Wrapper
@@ -1316,7 +1305,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
             return minBackgroundZ + 3
         case JZDecorationViewKinds.verticalGridline:
             return minBackgroundZ + 2
-        case JZDecorationViewKinds.outscreenCell:
+        case JZDecorationViewKinds.outScreenCell:
             return minCellZ + 41
         case JZDecorationViewKinds.restrictedArea:
             return minBackgroundZ + 1
@@ -1376,7 +1365,7 @@ extension JZWeekViewFlowLayout {
     }
     
     private func setupOutsideScreenDecorations() {
-        register(JZOutsideCellDecorationView.self, forDecorationViewOfKind: JZDecorationViewKinds.outscreenCell)
+        register(JZOutsideCellDecorationView.self, forDecorationViewOfKind: JZDecorationViewKinds.outScreenCell)
     }
     
     private func addOutsideScreenDecorationView(indexPath: IndexPath,
@@ -1387,12 +1376,12 @@ extension JZWeekViewFlowLayout {
         guard let collectionView = collectionView else { return }
         
         let attributes: UICollectionViewLayoutAttributes
-        (attributes, outscreenCellsAttributes) = layoutAttributesForDecorationView(at: indexPath, ofKind: JZDecorationViewKinds.outscreenCell, withItemCache: outscreenCellsAttributes, attributesKind: JZStyleLayoutAttributes.self)
+        (attributes, outScreenCellsAttributes) = layoutAttributesForDecorationView(at: indexPath, ofKind: JZDecorationViewKinds.outScreenCell, withItemCache: outScreenCellsAttributes, attributesKind: JZStyleLayoutAttributes.self)
         if let attributes = attributes as? JZStyleLayoutAttributes {
             attributes.backgroundColor = delegate?.collectionView(collectionView, colorForOutsideScreenDecorationViewAt: indexPath)
         }
         
-        attributes.zIndex = zIndexForElementKind(JZDecorationViewKinds.outscreenCell)
+        attributes.zIndex = zIndexForElementKind(JZDecorationViewKinds.outScreenCell)
         
         let inset: CGFloat = 5
         let height: CGFloat = 5
