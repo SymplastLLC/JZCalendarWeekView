@@ -607,6 +607,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     
     // MARK: - Layout
     override open func layoutAttributesForItem(at indexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
+        super.layoutAttributesForItem(at: indexPath)
         // MARK: - Layout
         let attrs = itemAttributes[indexPath]
         if attrs == nil {
