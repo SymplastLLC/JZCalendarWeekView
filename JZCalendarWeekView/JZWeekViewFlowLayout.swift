@@ -1168,9 +1168,8 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     
     // MARK: - Section sizing
     open func rectForSection(_ section: Int) -> CGRect {
-        guard let collectionView = collectionView else { return CGRect.zero }
-        return CGRect(x: rowHeaderWidth + sectionWidth * CGFloat(section), y: 0,
-                      width: sectionWidth, height: collectionViewContentSize.height)
+        CGRect(x: rowHeaderWidth + sectionWidth * CGFloat(section), y: 0,
+               width: sectionWidth, height: collectionViewContentSize.height)
     }
     
     // MARK: - Delegate Wrapper
