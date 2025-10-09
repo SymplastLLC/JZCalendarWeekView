@@ -615,7 +615,8 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
                 
             let sectionIndexes = NSIndexSet(indexesIn: NSRange(location: indexPath.section, length: 1))
             prepareHorizontalTileSectionLayoutForSections(sectionIndexes)
-            return itemAttributes[indexPath] == nil ? UICollectionViewLayoutAttributes() : itemAttributes[indexPath]
+            let item = itemAttributes[indexPath] ?? layoutAttributesForCell(at: indexPath, withItemCache: itemAttributes).1[indexPath]
+            return item
         }
         
         return attrs
@@ -822,15 +823,14 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     
     // MARK: - Layout
     func layoutAttributesForCell(at indexPath: IndexPath, withItemCache itemCache: AttDic) -> (UICollectionViewLayoutAttributesResource, AttDic) {
-        var layoutAttributes = itemCache[indexPath] as? UICollectionViewLayoutAttributesResource
-        
-        if layoutAttributes == nil {
-            var _itemCache = itemCache
-            layoutAttributes = UICollectionViewLayoutAttributesResource(forCellWith: indexPath)
-            _itemCache[indexPath] = layoutAttributes
-            return (layoutAttributes ?? UICollectionViewLayoutAttributesResource(forCellWith: indexPath), _itemCache)
+        let layoutAttributes = itemCache[indexPath] as? UICollectionViewLayoutAttributesResource
+        if let layoutAttributes {
+            return (layoutAttributes, itemCache)
         } else {
-            return (layoutAttributes ?? UICollectionViewLayoutAttributesResource(forCellWith: indexPath), itemCache)
+            var _itemCache = itemCache
+            let newAttributes = UICollectionViewLayoutAttributesResource(forCellWith: indexPath)
+            _itemCache[indexPath] = newAttributes
+            return (newAttributes, _itemCache)
         }
     }
     
@@ -840,43 +840,43 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
                                            attributesKind: UICollectionViewLayoutAttributes.Type = UICollectionViewLayoutAttributes.self) -> (UICollectionViewLayoutAttributes, AttDic) {
         var layoutAttributes = itemCache[indexPath]
         
-        if layoutAttributes == nil {
+        if let layoutAttributes {
+            return (layoutAttributes, itemCache)
+        } else {
             var _itemCache = itemCache
             layoutAttributes = attributesKind.init(forDecorationViewOfKind: kind, with: indexPath)
-            _itemCache[indexPath] = layoutAttributes
-            return (layoutAttributes ?? UICollectionViewLayoutAttributes(forDecorationViewOfKind: kind, with: indexPath), _itemCache)
-        } else {
-            return (layoutAttributes ?? UICollectionViewLayoutAttributes(forDecorationViewOfKind: kind, with: indexPath), itemCache)
+            let newAttributes = layoutAttributes ?? UICollectionViewLayoutAttributes(forDecorationViewOfKind: kind, with: indexPath)
+            _itemCache[indexPath] = newAttributes
+            
+            return (newAttributes , _itemCache)
         }
     }
     
     func layoutAttributesForDecorationView(at indexPath: IndexPath,
                                            ofKind kind: String,
                                            withItemCache itemCache: AttDic) -> (UICollectionViewLayoutAttributes, AttDic) {
-        var layoutAttributes = itemCache[indexPath]
-        
-        if layoutAttributes == nil {
-            var _itemCache = itemCache
-            layoutAttributes = UICollectionViewLayoutAttributes(forDecorationViewOfKind: kind, with: indexPath)
-            _itemCache[indexPath] = layoutAttributes
-            return (layoutAttributes ?? UICollectionViewLayoutAttributes(forDecorationViewOfKind: kind, with: indexPath), _itemCache)
+        let layoutAttributes = itemCache[indexPath]
+        if let layoutAttributes {
+            return (layoutAttributes, itemCache)
         } else {
-            return (layoutAttributes ?? UICollectionViewLayoutAttributes(forDecorationViewOfKind: kind, with: indexPath), itemCache)
+            var _itemCache = itemCache
+            let newAttributes = UICollectionViewLayoutAttributes(forDecorationViewOfKind: kind, with: indexPath)
+            _itemCache[indexPath] = newAttributes
+            return (newAttributes, _itemCache)
         }
     }
     
     private func layoutAttributesForSupplementaryView(at indexPath: IndexPath,
                                                       ofKind kind: String,
                                                       withItemCache itemCache: AttDic) -> (UICollectionViewLayoutAttributes, AttDic) {
-        var layoutAttributes = itemCache[indexPath]
-        
-        if layoutAttributes == nil {
-            var _itemCache = itemCache
-            layoutAttributes = UICollectionViewLayoutAttributes(forSupplementaryViewOfKind: kind, with: indexPath)
-            _itemCache[indexPath] = layoutAttributes
-            return (layoutAttributes ?? UICollectionViewLayoutAttributes(forSupplementaryViewOfKind: kind, with: indexPath), _itemCache)
+        let layoutAttributes = itemCache[indexPath]
+        if let layoutAttributes {
+            return (layoutAttributes, itemCache)
         } else {
-            return (layoutAttributes ?? UICollectionViewLayoutAttributes(forSupplementaryViewOfKind: kind, with: indexPath), itemCache)
+            var _itemCache = itemCache
+            let newAttributes = UICollectionViewLayoutAttributes(forSupplementaryViewOfKind: kind, with: indexPath)
+            _itemCache[indexPath] = newAttributes
+            return (newAttributes, _itemCache)
         }
     }
     
