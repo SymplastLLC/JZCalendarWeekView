@@ -225,7 +225,6 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     // MARK: - UICollectionViewLayout
     
     override open func finalizeCollectionViewUpdates() {
-        print("🏁 finalizeCollectionViewUpdates")
         for subview in (collectionView?.subviews ?? []) {
             for decorationViewClass in registeredDecorationClasses.values {
                 if subview.isKind(of: decorationViewClass) {
@@ -614,8 +613,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
                 
             let sectionIndexes = NSIndexSet(indexesIn: NSRange(location: indexPath.section, length: 1))
             prepareHorizontalTileSectionLayoutForSections(sectionIndexes)
-            let item = itemAttributes[indexPath] ?? layoutAttributesForCell(at: indexPath, withItemCache: itemAttributes).1[indexPath]
-            return item
+            return itemAttributes[indexPath] == nil ? UICollectionViewLayoutAttributes() : itemAttributes[indexPath]
         }
         
         return attrs
