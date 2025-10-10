@@ -225,7 +225,6 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     // MARK: - UICollectionViewLayout
     
     override open func finalizeCollectionViewUpdates() {
-        print("🏁 finalizeCollectionViewUpdates")
         for subview in (collectionView?.subviews ?? []) {
             for decorationViewClass in registeredDecorationClasses.values {
                 if subview.isKind(of: decorationViewClass) {
@@ -235,7 +234,6 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
         }
         // Avoid reloadData here as it may conflict with UIKit's update cycle and cause
         // "missing final attributes" crashes. Instead, just invalidate the layout.
-        print("🏁 Invalidating layout instead of reloadData")
         collectionView?.collectionViewLayout.invalidateLayout()
     }
     
@@ -615,8 +613,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
                 
             let sectionIndexes = NSIndexSet(indexesIn: NSRange(location: indexPath.section, length: 1))
             prepareHorizontalTileSectionLayoutForSections(sectionIndexes)
-            let item = itemAttributes[indexPath] ?? layoutAttributesForCell(at: indexPath, withItemCache: itemAttributes).1[indexPath]
-            return item
+            return itemAttributes[indexPath] == nil ? UICollectionViewLayoutAttributes() : itemAttributes[indexPath]
         }
         
         return attrs
@@ -671,16 +668,12 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     // MARK: - Animated updates safety
     /// Provide stable attributes for appearing items to avoid "missing initial/final attributes" crashes
     override open func initialLayoutAttributesForAppearingItem(at itemIndexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
-        print("🔵 initialLayoutAttributesForAppearingItem at \(itemIndexPath)")
         if let attrs = itemAttributes[itemIndexPath]?.copy() as? UICollectionViewLayoutAttributes {
-            print("🔵 Found cached attributes for \(itemIndexPath)")
             return attrs
         }
         if let superAttrs = super.initialLayoutAttributesForAppearingItem(at: itemIndexPath) {
-            print("🔵 Using super attributes for \(itemIndexPath)")
             return superAttrs
         }
-        print("🔵 Creating fallback attributes for \(itemIndexPath)")
         let fallback = UICollectionViewLayoutAttributes(forCellWith: itemIndexPath)
         fallback.alpha = 0
         return fallback
@@ -688,16 +681,12 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
 
     /// Provide stable attributes for disappearing items to avoid "missing initial/final attributes" crashes
     override open func finalLayoutAttributesForDisappearingItem(at itemIndexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
-        print("🔴 finalLayoutAttributesForDisappearingItem at \(itemIndexPath)")
         if let attrs = itemAttributes[itemIndexPath]?.copy() as? UICollectionViewLayoutAttributes {
-            print("🔴 Found cached attributes for \(itemIndexPath)")
             return attrs
         }
         if let superAttrs = super.finalLayoutAttributesForDisappearingItem(at: itemIndexPath) {
-            print("🔴 Using super attributes for \(itemIndexPath)")
             return superAttrs
         }
-        print("🔴 Creating fallback attributes for \(itemIndexPath)")
         let fallback = UICollectionViewLayoutAttributes(forCellWith: itemIndexPath)
         fallback.alpha = 0
         return fallback
@@ -705,27 +694,31 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
 
     /// Provide stable attributes for appearing supplementary elements
     override open func initialLayoutAttributesForAppearingSupplementaryElement(ofKind elementKind: String, at elementIndexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
-        print("🟢 initialLayoutAttributesForAppearingSupplementaryElement \(elementKind) at \(elementIndexPath)")
         let cached: UICollectionViewLayoutAttributes? = {
             switch elementKind {
-            case JZSupplementaryViewKinds.columnHeader: return columnHeaderAttributes[elementIndexPath]
-            case JZSupplementaryViewKinds.rowHeader: return rowHeaderAttributes[elementIndexPath]
-            case JZSupplementaryViewKinds.cornerHeader: return cornerHeaderAttributes[elementIndexPath]
-            case JZSupplementaryViewKinds.allDayHeader: return allDayHeaderAttributes[elementIndexPath]
-            case JZSupplementaryViewKinds.currentTimeline: return currentTimeLineAttributes[elementIndexPath]
-            case UICollectionView.elementKindSectionHeader: return topHeaderAttributes[elementIndexPath]
-            default: return nil
+            case JZSupplementaryViewKinds.columnHeader:
+                columnHeaderAttributes[elementIndexPath]
+            case JZSupplementaryViewKinds.rowHeader:
+                rowHeaderAttributes[elementIndexPath]
+            case JZSupplementaryViewKinds.cornerHeader:
+                cornerHeaderAttributes[elementIndexPath]
+            case JZSupplementaryViewKinds.allDayHeader:
+                allDayHeaderAttributes[elementIndexPath]
+            case JZSupplementaryViewKinds.currentTimeline:
+                currentTimeLineAttributes[elementIndexPath]
+            case UICollectionView.elementKindSectionHeader:
+                topHeaderAttributes[elementIndexPath]
+            default:
+                nil
             }
         }()
-        if let attrs = cached?.copy() as? UICollectionViewLayoutAttributes { 
-            print("🟢 Found cached supplementary attributes for \(elementKind) at \(elementIndexPath)")
+        
+        if let attrs = cached?.copy() as? UICollectionViewLayoutAttributes {
             return attrs 
         }
         if let superAttrs = super.initialLayoutAttributesForAppearingSupplementaryElement(ofKind: elementKind, at: elementIndexPath) { 
-            print("🟢 Using super supplementary attributes for \(elementKind) at \(elementIndexPath)")
             return superAttrs 
         }
-        print("🟢 Creating fallback supplementary attributes for \(elementKind) at \(elementIndexPath)")
         let fallback = UICollectionViewLayoutAttributes(forSupplementaryViewOfKind: elementKind, with: elementIndexPath)
         fallback.alpha = 0
         return fallback
@@ -733,27 +726,31 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
 
     /// Provide stable attributes for disappearing supplementary elements
     override open func finalLayoutAttributesForDisappearingSupplementaryElement(ofKind elementKind: String, at elementIndexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
-        print("🟡 finalLayoutAttributesForDisappearingSupplementaryElement \(elementKind) at \(elementIndexPath)")
         let cached: UICollectionViewLayoutAttributes? = {
             switch elementKind {
-            case JZSupplementaryViewKinds.columnHeader: return columnHeaderAttributes[elementIndexPath]
-            case JZSupplementaryViewKinds.rowHeader: return rowHeaderAttributes[elementIndexPath]
-            case JZSupplementaryViewKinds.cornerHeader: return cornerHeaderAttributes[elementIndexPath]
-            case JZSupplementaryViewKinds.allDayHeader: return allDayHeaderAttributes[elementIndexPath]
-            case JZSupplementaryViewKinds.currentTimeline: return currentTimeLineAttributes[elementIndexPath]
-            case UICollectionView.elementKindSectionHeader: return topHeaderAttributes[elementIndexPath]
-            default: return nil
+            case JZSupplementaryViewKinds.columnHeader:
+                columnHeaderAttributes[elementIndexPath]
+            case JZSupplementaryViewKinds.rowHeader:
+                rowHeaderAttributes[elementIndexPath]
+            case JZSupplementaryViewKinds.cornerHeader:
+                cornerHeaderAttributes[elementIndexPath]
+            case JZSupplementaryViewKinds.allDayHeader:
+                allDayHeaderAttributes[elementIndexPath]
+            case JZSupplementaryViewKinds.currentTimeline:
+                currentTimeLineAttributes[elementIndexPath]
+            case UICollectionView.elementKindSectionHeader:
+                topHeaderAttributes[elementIndexPath]
+            default:
+                nil
             }
         }()
-        if let attrs = cached?.copy() as? UICollectionViewLayoutAttributes { 
-            print("🟡 Found cached supplementary attributes for \(elementKind) at \(elementIndexPath)")
+        
+        if let attrs = cached?.copy() as? UICollectionViewLayoutAttributes {
             return attrs 
         }
         if let superAttrs = super.finalLayoutAttributesForDisappearingSupplementaryElement(ofKind: elementKind, at: elementIndexPath) { 
-            print("🟡 Using super supplementary attributes for \(elementKind) at \(elementIndexPath)")
             return superAttrs 
         }
-        print("🟡 Creating fallback supplementary attributes for \(elementKind) at \(elementIndexPath)")
         let fallback = UICollectionViewLayoutAttributes(forSupplementaryViewOfKind: elementKind, with: elementIndexPath)
         fallback.alpha = 0
         return fallback
@@ -761,30 +758,36 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
 
     /// Provide stable attributes for appearing decoration elements
     override open func initialLayoutAttributesForAppearingDecorationElement(ofKind elementKind: String, at decorationIndexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
-        print("🟣 initialLayoutAttributesForAppearingDecorationElement \(elementKind) at \(decorationIndexPath)")
         let cached: UICollectionViewLayoutAttributes? = {
             switch elementKind {
-            case JZDecorationViewKinds.verticalGridline: return verticalGridlineAttributes[decorationIndexPath]
-            case JZDecorationViewKinds.horizontalGridline: return horizontalGridlineAttributes[decorationIndexPath]
-            case JZDecorationViewKinds.rowHeaderBackground: return rowHeaderBackgroundAttributes[decorationIndexPath]
-            case JZDecorationViewKinds.columnHeaderBackground: return columnHeaderBackgroundAttributes[decorationIndexPath]
-            case JZDecorationViewKinds.allDayHeaderBackground: return allDayHeaderBackgroundAttributes[decorationIndexPath]
-            case JZDecorationViewKinds.allDayCorner: return allDayCornerAttributes[decorationIndexPath]
-            case JZDecorationViewKinds.outScreenCell: return outScreenCellsAttributes[decorationIndexPath]
-            case JZDecorationViewKinds.restrictedArea: return restrictedAreasAttributes[decorationIndexPath]
-            case JZDecorationViewKinds.rowHeaderDivider: return rowHeaderDividerHorizontalAttributes[decorationIndexPath]
-            default: return nil
+            case JZDecorationViewKinds.verticalGridline:
+                verticalGridlineAttributes[decorationIndexPath]
+            case JZDecorationViewKinds.horizontalGridline:
+                horizontalGridlineAttributes[decorationIndexPath]
+            case JZDecorationViewKinds.rowHeaderBackground:
+                rowHeaderBackgroundAttributes[decorationIndexPath]
+            case JZDecorationViewKinds.columnHeaderBackground:
+                columnHeaderBackgroundAttributes[decorationIndexPath]
+            case JZDecorationViewKinds.allDayHeaderBackground:
+                allDayHeaderBackgroundAttributes[decorationIndexPath]
+            case JZDecorationViewKinds.allDayCorner:
+                allDayCornerAttributes[decorationIndexPath]
+            case JZDecorationViewKinds.outScreenCell:
+                outScreenCellsAttributes[decorationIndexPath]
+            case JZDecorationViewKinds.restrictedArea:
+                restrictedAreasAttributes[decorationIndexPath]
+            case JZDecorationViewKinds.rowHeaderDivider:
+                rowHeaderDividerHorizontalAttributes[decorationIndexPath]
+            default:
+                nil
             }
         }()
         if let attrs = cached?.copy() as? UICollectionViewLayoutAttributes { 
-            print("🟣 Found cached decoration attributes for \(elementKind) at \(decorationIndexPath)")
             return attrs 
         }
         if let superAttrs = super.initialLayoutAttributesForAppearingDecorationElement(ofKind: elementKind, at: decorationIndexPath) { 
-            print("🟣 Using super decoration attributes for \(elementKind) at \(decorationIndexPath)")
             return superAttrs 
         }
-        print("🟣 Creating fallback decoration attributes for \(elementKind) at \(decorationIndexPath)")
         let fallback = UICollectionViewLayoutAttributes(forDecorationViewOfKind: elementKind, with: decorationIndexPath)
         fallback.alpha = 0
         return fallback
@@ -792,30 +795,36 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
 
     /// Provide stable attributes for disappearing decoration elements
     override open func finalLayoutAttributesForDisappearingDecorationElement(ofKind elementKind: String, at decorationIndexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
-        print("🟠 finalLayoutAttributesForDisappearingDecorationElement \(elementKind) at \(decorationIndexPath)")
         let cached: UICollectionViewLayoutAttributes? = {
             switch elementKind {
-            case JZDecorationViewKinds.verticalGridline: return verticalGridlineAttributes[decorationIndexPath]
-            case JZDecorationViewKinds.horizontalGridline: return horizontalGridlineAttributes[decorationIndexPath]
-            case JZDecorationViewKinds.rowHeaderBackground: return rowHeaderBackgroundAttributes[decorationIndexPath]
-            case JZDecorationViewKinds.columnHeaderBackground: return columnHeaderBackgroundAttributes[decorationIndexPath]
-            case JZDecorationViewKinds.allDayHeaderBackground: return allDayHeaderBackgroundAttributes[decorationIndexPath]
-            case JZDecorationViewKinds.allDayCorner: return allDayCornerAttributes[decorationIndexPath]
-            case JZDecorationViewKinds.outScreenCell: return outScreenCellsAttributes[decorationIndexPath]
-            case JZDecorationViewKinds.restrictedArea: return restrictedAreasAttributes[decorationIndexPath]
-            case JZDecorationViewKinds.rowHeaderDivider: return rowHeaderDividerHorizontalAttributes[decorationIndexPath]
-            default: return nil
+            case JZDecorationViewKinds.verticalGridline:
+                verticalGridlineAttributes[decorationIndexPath]
+            case JZDecorationViewKinds.horizontalGridline:
+                horizontalGridlineAttributes[decorationIndexPath]
+            case JZDecorationViewKinds.rowHeaderBackground:
+                rowHeaderBackgroundAttributes[decorationIndexPath]
+            case JZDecorationViewKinds.columnHeaderBackground:
+                columnHeaderBackgroundAttributes[decorationIndexPath]
+            case JZDecorationViewKinds.allDayHeaderBackground:
+                allDayHeaderBackgroundAttributes[decorationIndexPath]
+            case JZDecorationViewKinds.allDayCorner:
+                allDayCornerAttributes[decorationIndexPath]
+            case JZDecorationViewKinds.outScreenCell:
+                outScreenCellsAttributes[decorationIndexPath]
+            case JZDecorationViewKinds.restrictedArea:
+                restrictedAreasAttributes[decorationIndexPath]
+            case JZDecorationViewKinds.rowHeaderDivider:
+                rowHeaderDividerHorizontalAttributes[decorationIndexPath]
+            default:
+                nil
             }
         }()
         if let attrs = cached?.copy() as? UICollectionViewLayoutAttributes { 
-            print("🟠 Found cached decoration attributes for \(elementKind) at \(decorationIndexPath)")
             return attrs 
         }
         if let superAttrs = super.finalLayoutAttributesForDisappearingDecorationElement(ofKind: elementKind, at: decorationIndexPath) { 
-            print("🟠 Using super decoration attributes for \(elementKind) at \(decorationIndexPath)")
             return superAttrs 
         }
-        print("🟠 Creating fallback decoration attributes for \(elementKind) at \(decorationIndexPath)")
         let fallback = UICollectionViewLayoutAttributes(forDecorationViewOfKind: elementKind, with: decorationIndexPath)
         fallback.alpha = 0
         return fallback
@@ -1225,7 +1234,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     }
     
     private func resourceIndexForIndexPath(_ indexPath: IndexPath) -> Int {
-        guard let collectionView = collectionView else { return 0 }
+        guard let collectionView else { return 0 }
         return delegate?.collectionView(collectionView, layout: self, resourceIndexForItemAtIndexPath: indexPath) ?? 0
     }
     
@@ -1286,35 +1295,35 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     open func zIndexForElementKind(_ kind: String, withOffset: Int = 1) -> Int {
         switch kind {
         case JZSupplementaryViewKinds.cornerHeader, JZDecorationViewKinds.allDayCorner, JZSupplementaryViewKinds.topHeader:
-            return minOverlayZ + 11
+            minOverlayZ + 11
         case JZSupplementaryViewKinds.allDayHeader:
-            return minOverlayZ + 10
+            minOverlayZ + 10
         case JZDecorationViewKinds.allDayHeaderBackground:
-            return minOverlayZ + 9
+            minOverlayZ + 9
         case JZSupplementaryViewKinds.rowHeader, JZDecorationViewKinds.rowHeaderDivider:
-            return minOverlayZ + 8
+            minOverlayZ + 8
         case JZDecorationViewKinds.rowHeaderBackground:
-            return minOverlayZ + 7
+            minOverlayZ + 7
         case JZSupplementaryViewKinds.columnHeader:
-            return minOverlayZ + 6
+            minOverlayZ + 6
         case JZDecorationViewKinds.columnHeaderBackground:
-            return minOverlayZ + 5
+            minOverlayZ + 5
         case JZSupplementaryViewKinds.currentTimeline:
-            return minOverlayZ + 4
+            minOverlayZ + 4
         case JZDecorationViewKinds.horizontalGridline:
-            return minBackgroundZ + 3
+            minBackgroundZ + 3
         case JZDecorationViewKinds.verticalGridline:
-            return minBackgroundZ + 2
+            minBackgroundZ + 2
         case JZDecorationViewKinds.outScreenCell:
-            return minCellZ + 41
+            minCellZ + 41
         case JZDecorationViewKinds.restrictedArea:
-            return minBackgroundZ + 1
+            minBackgroundZ + 1
         case JZSupplementaryViewKinds.placeholderCell:
-            return minCellZ + 10
+            minCellZ + 10
         case JZSupplementaryViewKinds.calendarBlockCell:
-            return minBackgroundZ + withOffset + 1
+            minBackgroundZ + withOffset + 1
         default:
-            return minCellZ
+            minCellZ
         }
     }
 }
