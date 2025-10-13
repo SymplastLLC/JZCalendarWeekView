@@ -55,10 +55,12 @@ open class JZBaseEvent: NSObject, NSCopying {
         appointment != nil
     }
 
-    public init(id: String = "",
-                startDate: Date,
-                endDate: Date,
-                resourceIndex: Int? = nil) {
+    public init(
+        id: String = "",
+        startDate: Date,
+        endDate: Date,
+        resourceIndex: Int? = nil
+    ) {
         self.id = id
         self.startDate = startDate
         self.endDate = endDate
@@ -70,30 +72,31 @@ open class JZBaseEvent: NSObject, NSCopying {
     // Must be overrided
     // Shadow copy is enough for JZWeekViewHelper to create multiple events for cross-day events
     open func copy(with zone: NSZone? = nil) -> Any {
-        JZBaseEvent(id: id, startDate: startDate, endDate: endDate, resourceIndex: resourceIndex)
+        JZBaseEvent(
+            id: id,
+            startDate: startDate,
+            endDate: endDate,
+            resourceIndex: resourceIndex
+        )
     }
 }
 
 open class SKBaseEvent<T>: JZBaseEvent {
-    
     public var newData: T?
-    
 }
 
 public extension JZBaseEvent {
-    
     var stubImage: UIImage? {
         UIImage(named: "background_request")
     }
 
     var stubColor: UIColor {
         if let img = stubImage {
-            return UIColor(patternImage: img)
+            UIColor(patternImage: img)
         } else {
-            return UIColor(hexString: "#fdfec8")
+            UIColor(hexString: "#fdfec8")
         }
     }
-    
 }
 
 #endif

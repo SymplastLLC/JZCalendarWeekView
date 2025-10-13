@@ -97,6 +97,7 @@ open class JZWeekViewHelper {
                     resultEvents[startDateStartDay] = [T]()
                 }
                 if let copiedEvent = event.copy() as? T {
+                    copiedEvent.resourceIndex = event.resourceIndex
                     resultEvents[startDateStartDay]?.append(copiedEvent)
                 }
             } else {
@@ -115,6 +116,7 @@ open class JZWeekViewHelper {
                         newEvent.intraStartDate = currentStartDate.startOfDay
                         newEvent.intraEndDate = currentStartDate.endOfDay
                     }
+                    newEvent.resourceIndex = event.resourceIndex
                     resultEvents[currentStartDate]?.append(newEvent)
                 }
             }
