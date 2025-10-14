@@ -54,6 +54,10 @@ final public class ZoomConfiguration: NSObject, NSCoding {
                 (.minutes_5, 300)
             }
         }
+        
+        public var durationForNewEvent: Int {
+            JZHourGridDivision.minutes_30.rawValue
+        }
 
         public var durationPlaceholder: TimeInterval {
             TimeInterval(value.division.rawValue * 60)
