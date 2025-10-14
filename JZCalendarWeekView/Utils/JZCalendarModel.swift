@@ -47,34 +47,27 @@ final public class ZoomConfiguration: NSObject, NSCoding {
         public var value: (division: JZHourGridDivision, height: CGFloat) {
             switch self {
             case .min:
-                return (.minutes_30, 75)
+                (.minutes_30, 75)
             case .default:
-                return (.minutes_15, 150)
+                (.minutes_15, 150)
             case .max:
-                return (.minutes_5, 300)
+                (.minutes_5, 300)
             }
         }
 
         public var durationPlaceholder: TimeInterval {
-            switch self {
-            case .min:
-                return TimeInterval(30 * 60)
-            case .default:
-                return TimeInterval(15 * 60)
-            case .max:
-                return TimeInterval(5 * 60)
-            }
+            TimeInterval(value.division.rawValue * 60)
         }
-
+        
         // 🤔🤔🤔🤔🤔🤔🤔🤔🤔
         public var offset: Int {
             switch self {
             case .min:
-                return 1800
+                1800
             case .default:
-                return 900
+                900
             case .max:
-                return 300
+                300
             }
         }
     }
