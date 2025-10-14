@@ -118,7 +118,11 @@ open class JZBaseWeekView: UIView {
         frame.height - flowLayout.allDayHeaderHeight - flowLayout.contentsMargin.top - flowLayout.contentsMargin.bottom - flowLayout.topHeaderHeight - flowLayout.columnHeaderHeight - safeAreaInsets.bottom
     }
     public var widthInColumn: CGFloat {
-        contentViewWidth / CGFloat(numOfResources)
+        if numOfResources > 1 {
+            contentViewWidth / CGFloat(numOfResources)
+        } else {
+            flowLayout.sectionWidth
+        }
     }
     private var isFirstAppear: Bool = true
     public var isAllDaySupported: Bool = false

@@ -76,7 +76,12 @@ extension LongPressViewController: JZBaseViewDelegate {
 // LongPress core
 extension LongPressViewController: JZLongPressViewDelegate, JZLongPressViewDataSource {
 
-    func weekView(_ weekView: JZLongPressWeekView, didEndAddNewLongPressAt startDate: Date, in column: Int) {
+    func weekView(
+        _ weekView: JZLongPressWeekView,
+        didEndAddNewLongPressAt startDate: Date,
+        in column: Int,
+        longPressEndLocation: CGPoint
+    ) {
         let newEvent = AllDayEvent(
             id: UUID().uuidString,
             title: "New Event",
@@ -95,7 +100,13 @@ extension LongPressViewController: JZLongPressViewDelegate, JZLongPressViewDataS
         weekView.forceReload(reloadEvents: viewModel.eventsByDate)
     }
 
-    func weekView(_ weekView: JZLongPressWeekView, editingEvent: JZBaseEvent, didEndMoveLongPressAt startDate: Date, in column: Int) {
+    func weekView(
+        _ weekView: JZLongPressWeekView,
+        editingEvent: JZBaseEvent,
+        didEndMoveLongPressAt startDate: Date,
+        in column: Int,
+        longPressEndLocation: CGPoint
+    ) {
         guard let event = editingEvent as? AllDayEvent else { return }
         let duration = Calendar.current.dateComponents([.minute], from: event.startDate, to: event.endDate).minute!
         let selectedIndex = viewModel.events.firstIndex(where: { $0.id == event.id })!

@@ -32,11 +32,7 @@ open class JZBaseEvent: NSObject, NSCopying {
     public var isHiddenCalendarBlockOptions = false
     public var isDimmed = false
     public var inParkingLot = false
-    
-    @available(*, deprecated, message: "Use the 'data' property instead this!")
-    public var appointmentRequest: Any?
-    @available(*, deprecated, message: "Use the 'data' property instead this!")
-    public var appointment: Any?
+    public var isAvailableForMoving: Bool = false
     
     public var data: Any?
     public var status: Any?
@@ -44,16 +40,6 @@ open class JZBaseEvent: NSObject, NSCopying {
     public var providerId: Int?
     public var resourceId: String?
     var testColor: UIColor?
-    
-    @available(*, deprecated, message: "Use the 'isAppointmentRequest' property instead this!")
-    public var isAppointmentRequestItemEvent: Bool {
-        appointmentRequest != nil
-    }
-    
-    @available(*, deprecated, message: "Use the 'isAppointment' property instead this!")
-    public var isAppointmentEvent: Bool {
-        appointment != nil
-    }
 
     public init(
         id: String = "",
