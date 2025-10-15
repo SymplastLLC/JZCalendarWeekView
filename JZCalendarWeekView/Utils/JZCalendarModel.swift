@@ -31,13 +31,18 @@ final public class ZoomConfiguration: NSObject, NSCoding {
         case min, `default`, max
 
         public var image: UIImage? {
+            UIImage(systemName: imageSymbolName)?.withRenderingMode(.alwaysTemplate)
+        }
+        
+        public var imageSymbolName: String {
             switch self {
             case .min, .default:
-                return UIImage(systemName: "plus.magnifyingglass")?.withRenderingMode(.alwaysTemplate)
+                "plus.magnifyingglass"
             case .max:
-                return UIImage(systemName: "minus.magnifyingglass")?.withRenderingMode(.alwaysTemplate)
+                "minus.magnifyingglass"
             }
         }
+            
 
         public var value: (division: JZHourGridDivision, height: CGFloat) {
             switch self {
