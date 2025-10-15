@@ -27,6 +27,7 @@ class LongPressViewController: UIViewController {
     }
 
     private func setupCalendarView() {
+        calendarWeekView.flowLayout.itemMargin.right = 15
         calendarWeekView.baseDelegate = self
 
         if viewModel.currentSelectedData != nil {

@@ -575,7 +575,11 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                         longPressEndLocation: pointInSelfView
                     )
                 case .move:
-                    if let currentEditEvent = currentEditingInfo.event {
+                    if let currentEditEvent = currentEditingInfo.event, !Calendar.current.isDate(
+                        currentEditEvent.startDate,
+                        equalTo: longPressViewStartDate,
+                        toGranularity: .minute
+                    ) {
                         longPressDelegate?.weekView(
                             self,
                             editingEvent: currentEditEvent,
