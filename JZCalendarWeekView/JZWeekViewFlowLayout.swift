@@ -65,8 +65,8 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     open var defaultCurrentTimeLineHeight: CGFloat { 10 }
     open var defaultAllDayOneLineHeight: CGFloat { 30 }
     /// Margin for the flowLayout in collectionView
-    open var contentsMargin: UIEdgeInsets { UIEdgeInsets(top: 10, left: 0, bottom: 10, right: 0) }
-    open var itemMargin: UIEdgeInsets { UIEdgeInsets(top: 1, left: 1, bottom: 1, right: 1) }
+    open var contentsMargin: UIEdgeInsets = UIEdgeInsets(top: 10, left: 0, bottom: 10, right: 0)
+    open var itemMargin: UIEdgeInsets = UIEdgeInsets(top: 1, left: 1, bottom: 1, right: 1)
     /// weekview contentSize height
     open var maxSectionHeight: CGFloat {
         let height = hourHeightForZoomLevel * CGFloat(timelineType.duration) // statement too long for Swift 5 compiler
@@ -91,8 +91,10 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     
     var currentTimeComponents: DateComponents {
         if cachedCurrentTimeComponents[0] == nil {
-            cachedCurrentTimeComponents[0] = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute],
-                                                                         from: Date())
+            cachedCurrentTimeComponents[0] = Calendar.current.dateComponents(
+                [.year, .month, .day, .hour, .minute],
+                from: Date()
+            )
         }
         return cachedCurrentTimeComponents[0] ?? DateComponents()
     }
