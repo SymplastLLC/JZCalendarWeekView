@@ -183,7 +183,7 @@ open class JZLongPressWeekView: JZBaseWeekView {
     private func setupGestures() {
         let longPressGesture = UILongPressGestureRecognizer(
             target: self,
-            action: #selector(handleLongPressGesture(_:))
+            action: #selector(handleLongPressGesture)
         )
         longPressGesture.delegate = self
         collectionView.addGestureRecognizer(longPressGesture)
@@ -413,6 +413,13 @@ open class JZLongPressWeekView: JZBaseWeekView {
 
 // Long press Gesture methods
 extension JZLongPressWeekView: UIGestureRecognizerDelegate {
+    
+    public func gestureRecognizer(
+        _ gestureRecognizer: UIGestureRecognizer,
+        shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
+    ) -> Bool {
+        true
+    }
 
     // Override this function to customise gesture begin conditions
     override open func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
@@ -427,7 +434,6 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         }
 
         let hasItemAtPoint = collectionView.indexPathForItem(at: pointInCollectionView) != nil
-
         // Long press should not begin if there are events at long press position and move not required
         if hasItemAtPoint && !longPressTypes.contains(.move) {
             return false
@@ -437,7 +443,6 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         if !hasItemAtPoint && !longPressTypes.contains(.addNew) {
             return false
         }
-
         return true
     }
 

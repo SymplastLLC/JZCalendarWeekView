@@ -27,20 +27,22 @@ class LongPressViewController: UIViewController {
     }
 
     private func setupCalendarView() {
-        calendarWeekView.flowLayout.itemMargin.right = 15
+        calendarWeekView.flowLayout.sectionRightInset = 15
         calendarWeekView.baseDelegate = self
 
         if viewModel.currentSelectedData != nil {
             // For example only
             setupCalendarViewWithSelectedData()
         } else {
-            calendarWeekView.setupCalendar(numOfDays: 5,
-                                           setDate: Date(),
-                                           allEvents: viewModel.eventsByDate,
-                                           scrollType: .pageScroll,
-                                           firstDayOfWeek: .monday,
-                                           currentTimelineType: .page,
-                                           scrollableRange: (nil, nil))
+            calendarWeekView.setupCalendar(
+                numOfDays: 5,
+                setDate: Date(),
+                allEvents: viewModel.eventsByDate,
+                scrollType: .pageScroll,
+                firstDayOfWeek: .monday,
+                currentTimelineType: .page,
+                scrollableRange: (nil, nil)
+            )
         }
         // LongPress delegate, datasorce and type setup
         calendarWeekView.longPressDelegate = self

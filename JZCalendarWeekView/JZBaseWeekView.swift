@@ -418,8 +418,10 @@ open class JZBaseWeekView: UIView {
             self?.forceReload()
             
             if scrollToTime {
-                self?.flowLayout.scrollCollectionViewTo(time: date,
-                                                        position: .centerVertically)
+                self?.flowLayout.scrollCollectionViewTo(
+                    time: date,
+                    position: .centerVertically
+                )
             }
         }
     }
@@ -435,9 +437,13 @@ open class JZBaseWeekView: UIView {
         let hour = CGFloat(components.hour!) + CGFloat(components.minute!) / 60
         let setTimeY = hour * flowLayout.hourHeightForZoomLevel + flowLayout.contentsMargin.top
         let maxOffsetY = collectionView.contentSize.height - collectionView.frame.height + flowLayout.columnHeaderHeight + flowLayout.allDayHeaderHeight + flowLayout.contentsMargin.bottom + flowLayout.contentsMargin.top + flowLayout.topHeaderHeight
-        collectionView.setContentOffsetWithoutDelegate(CGPoint(x: collectionView.contentOffset.x,
-                                                               y: max(0, min(setTimeY, maxOffsetY))),
-                                                       animated: false)
+        collectionView.setContentOffsetWithoutDelegate(
+            CGPoint(
+                x: collectionView.contentOffset.x,
+                y: max(0, min(setTimeY, maxOffsetY))
+            ),
+            animated: false
+        )
     }
 
     /// Get current event with item indexPath
@@ -445,7 +451,21 @@ open class JZBaseWeekView: UIView {
     /// - Parameter indexPath: The indexPath of an item in collectionView
     open func getCurrentEvent(with indexPath: IndexPath) -> JZBaseEvent? {
         let date = flowLayout.dateForColumnHeader(at: indexPath)
-        return isAllDaySupported ? notAllDayEventsBySection[date]?[indexPath.row] : allEventsBySection[date]?[indexPath.row]
+        if isAllDaySupported {
+            let events = notAllDayEventsBySection[date] ?? []
+            if events.indices.contains(indexPath.row) {
+                return events[indexPath.row]
+            } else {
+                return nil
+            }
+        } else {
+            let events = allEventsBySection[date] ?? []
+            if events.indices.contains(indexPath.row) {
+                return events[indexPath.row]
+            } else {
+                return nil
+            }
+        }
     }
 
     open func getDatesInCurrentPage(isScrolling: Bool) -> [Date] {

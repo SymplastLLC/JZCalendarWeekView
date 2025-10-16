@@ -67,6 +67,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     /// Margin for the flowLayout in collectionView
     open var contentsMargin: UIEdgeInsets = UIEdgeInsets(top: 10, left: 0, bottom: 10, right: 0)
     open var itemMargin: UIEdgeInsets = UIEdgeInsets(top: 1, left: 1, bottom: 1, right: 1)
+    open var sectionRightInset: CGFloat = 0
     /// weekview contentSize height
     open var maxSectionHeight: CGFloat {
         let height = hourHeightForZoomLevel * CGFloat(timelineType.duration) // statement too long for Swift 5 compiler
@@ -463,9 +464,9 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
             
             let widthItem: CGFloat
             if allResourceCount > 1 {
-                widthItem = subsectionWidth
+                widthItem = subsectionWidth - sectionRightInset
             } else {
-                widthItem = sectionWidth
+                widthItem = sectionWidth - sectionRightInset
             }
             
             let resourceOffset = (subsectionWidth * CGFloat(itemResourceIndex)).toDecimal1Value()
@@ -515,12 +516,14 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
         
         for resIdx in 0..<allResourceCount {
             let resourceOffset = nearbyint(subsectionWidth * CGFloat(resIdx))
-            adjustItemsForOverlap(sectionItemAttributes,
-                                  inSection: section,
-                                  sectionMinX: sectionX + resourceOffset,
-                                  currentSectionZ: zIndexForElementKind(JZSupplementaryViewKinds.eventCell),
-                                  resourceIdx: resIdx,
-                                  sectionWidth: subsectionWidth)
+            adjustItemsForOverlap(
+                sectionItemAttributes,
+                inSection: section,
+                sectionMinX: sectionX + resourceOffset,
+                currentSectionZ: zIndexForElementKind(JZSupplementaryViewKinds.eventCell),
+                resourceIdx: resIdx,
+                sectionWidth: subsectionWidth - sectionRightInset
+            )
         }
     }
     
@@ -900,12 +903,14 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
      means the order is wrong.
      2. Efficiency issue for getAvailableRanges and the rest of the code in this method
      */
-    open func adjustItemsForOverlap(_ sectionItemAttributes: [UICollectionViewLayoutAttributesResource],
-                                    inSection: Int,
-                                    sectionMinX: CGFloat,
-                                    currentSectionZ: Int,
-                                    resourceIdx: Int = 0,
-                                    sectionWidth: CGFloat) {
+    open func adjustItemsForOverlap(
+        _ sectionItemAttributes: [UICollectionViewLayoutAttributesResource],
+        inSection: Int,
+        sectionMinX: CGFloat,
+        currentSectionZ: Int,
+        resourceIdx: Int = 0,
+        sectionWidth: CGFloat
+    ) {
         let (maxOverlapIntervalCount, overlapGroups) = groupOverlapItems(items: sectionItemAttributes.filter { $0.resourceIndex == resourceIdx })
         guard maxOverlapIntervalCount > 1 else { return }
         
@@ -915,7 +920,13 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
         
         // First draw the largest overlap items layout (only this case itemWidth is fixed and always at the right position)
         let largestOverlapCountGroup = sortedOverlapGroups[0]
-        setItemsAdjustedAttributes(fullWidth: sectionWidth, items: largestOverlapCountGroup, currentMinX: sectionMinX, sectionZ: &sectionZ, adjustedItems: &adjustedItems)
+        setItemsAdjustedAttributes(
+            fullWidth: sectionWidth,
+            items: largestOverlapCountGroup,
+            currentMinX: sectionMinX,
+            sectionZ: &sectionZ,
+            adjustedItems: &adjustedItems
+        )
         
         for index in 1..<sortedOverlapGroups.count {
             let group = sortedOverlapGroups[index]
