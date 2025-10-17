@@ -78,6 +78,25 @@ open class JZBaseEvent: NSObject, NSCopying {
 
 open class SKBaseEvent<T>: JZBaseEvent {
     public var newData: T?
+    
+    open override func copy(with zone: NSZone? = nil) -> Any {
+        let copyEvent = SKBaseEvent(
+            id: id,
+            startDate: startDate,
+            endDate: endDate,
+            resourceIndex: resourceIndex
+        )
+        copyEvent.isAppointment = isAppointment
+        copyEvent.inParkingLot = inParkingLot
+        copyEvent.isAvailableForMoving = isAvailableForMoving
+        copyEvent.data = data
+        copyEvent.status = status
+        copyEvent.zIndex = zIndex
+        copyEvent.providerId = providerId
+        copyEvent.resourceId = resourceId
+        copyEvent.newData = newData
+        return copyEvent
+    }
 }
 
 public extension JZBaseEvent {
