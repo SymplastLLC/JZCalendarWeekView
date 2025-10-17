@@ -58,12 +58,21 @@ open class JZBaseEvent: NSObject, NSCopying {
     // Must be overrided
     // Shadow copy is enough for JZWeekViewHelper to create multiple events for cross-day events
     open func copy(with zone: NSZone? = nil) -> Any {
-        JZBaseEvent(
+        let copyEvent = JZBaseEvent(
             id: id,
             startDate: startDate,
             endDate: endDate,
             resourceIndex: resourceIndex
         )
+        copyEvent.isAppointment = isAppointment
+        copyEvent.inParkingLot = inParkingLot
+        copyEvent.isAvailableForMoving = isAvailableForMoving
+        copyEvent.data = data
+        copyEvent.status = status
+        copyEvent.zIndex = zIndex
+        copyEvent.providerId = providerId
+        copyEvent.resourceId = resourceId
+        return copyEvent
     }
 }
 
