@@ -14,6 +14,7 @@ open class JZBaseEvent: NSObject, NSCopying {
 
     /// Unique id for each event to identify an event, especially for cross-day events
     public var id: String
+    public var uniqId: UUID
     public var isPlaceholder: Bool = false
     public var isCalendarBlock: Bool = false
     public var isAppointment: Bool = false
@@ -43,11 +44,13 @@ open class JZBaseEvent: NSObject, NSCopying {
 
     public init(
         id: String = "",
+        uniqId: UUID = UUID(),
         startDate: Date,
         endDate: Date,
         resourceIndex: Int? = nil
     ) {
         self.id = id
+        self.uniqId = uniqId
         self.startDate = startDate
         self.endDate = endDate
         self.intraStartDate = startDate
