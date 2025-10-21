@@ -63,6 +63,7 @@ open class JZBaseEvent: NSObject, NSCopying {
     open func copy(with zone: NSZone? = nil) -> Any {
         let copyEvent = JZBaseEvent(
             id: id,
+            uniqId: uniqId,
             startDate: startDate,
             endDate: endDate,
             resourceIndex: resourceIndex
@@ -85,6 +86,7 @@ open class SKBaseEvent<T>: JZBaseEvent {
     open override func copy(with zone: NSZone? = nil) -> Any {
         let copyEvent = SKBaseEvent(
             id: id,
+            uniqId: uniqId,
             startDate: startDate,
             endDate: endDate,
             resourceIndex: resourceIndex
