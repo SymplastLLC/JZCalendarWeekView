@@ -146,6 +146,8 @@ open class JZLongPressWeekView: JZBaseWeekView {
     public var moveTimeMinInterval: Int = 15
     /// For an addNew event, the event duration mins determine the add new event duration and height
     public var addNewDurationMins: Int = 120
+    /// Magic value to calculate date correctly
+    public var magicDragYOffset: CGFloat = 0
     /// The longPressTimeLabel along with longPressView, can be customised
     public var longPressTimeLabel: UILabel = {
         let label = UILabel()
@@ -632,7 +634,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         let longPressViewTopDate = getDateForPoint(
             pointCollectionView: CGPoint(
                 x: pointInCollectionView.x,
-                y: pointInCollectionView.y - (pressPosition?.yToViewTop ?? 0)
+                y: pointInCollectionView.y - (pressPosition?.yToViewTop ?? 0) - magicDragYOffset
             ),
             pointSelfView: pointInSelfView
         )

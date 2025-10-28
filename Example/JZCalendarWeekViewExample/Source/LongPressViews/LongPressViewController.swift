@@ -51,7 +51,7 @@ class LongPressViewController: UIViewController {
 
         // Optional
         calendarWeekView.addNewDurationMins = 120
-        calendarWeekView.moveTimeMinInterval = 15
+        calendarWeekView.moveTimeMinInterval = calendarWeekView.zoom.value.division.rawValue
     }
 
     /// For example only
