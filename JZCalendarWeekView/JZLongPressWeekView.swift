@@ -149,8 +149,13 @@ open class JZLongPressWeekView: JZBaseWeekView {
     /// The longPressTimeLabel along with longPressView, can be customised
     public var longPressTimeLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = UIColor.gray
+        label.font = UIFont.systemFont(ofSize: 17)
+        label.textColor = UIColor.white
+        label.backgroundColor = UIColor.black.withAlphaComponent(0.6)
+        label.layer.cornerRadius = 5
+        label.clipsToBounds = true
+        label.minimumScaleFactor = 0.8
+        label.adjustsFontSizeToFitWidth = true
         return label
     }()
     /// The moving cell contentView layer opacity (when you move the existing cell, the previous cell will be translucent)
@@ -197,14 +202,14 @@ open class JZLongPressWeekView: JZBaseWeekView {
 
     /// Update time label content, this method can be overridden
     open func updateTimeLabelText(time: Date) {
-        longPressTimeLabel.text = time.getTimeIgnoreSecondsFormat()
+        longPressTimeLabel.text = " \(time.getTimeIgnoreSecondsFormat()) "
     }
 
     /// Update the position for the time label
     private func updateTimeLabelPosition(pointInSelfView: CGPoint) {
         guard let pressPosition else { return }
         let isOutsideLeftMargin = pointInSelfView.x - pressPosition.xToViewLeft < longPressLeftMarginX
-        longPressTimeLabel.textAlignment = isOutsideLeftMargin ? .right : .left
+        longPressTimeLabel.frame.origin.x = isOutsideLeftMargin ? currentEditingInfo.cellSize.width - longPressTimeLabel.frame.width : 0
 
         guard let longPressView else { return }
         let labelHeight = longPressTimeLabel.frame.height
@@ -315,8 +320,8 @@ open class JZLongPressWeekView: JZBaseWeekView {
         
         // timeText width will change from 00:00 - 24:00, and for each time the length will be different
         // add 5 to ensure the max width
-        let labelHeight: CGFloat = 15
-        let textWidth = UILabel.getLabelWidth(labelHeight, font: longPressTimeLabel.font, text: "23:59") + 5
+        let labelHeight: CGFloat = 20
+        let textWidth = UILabel.getLabelWidth(labelHeight, font: longPressTimeLabel.font, text: "23:59 PM")
         let timeLabelWidth: CGFloat
         
         let pressView: UIView
@@ -324,10 +329,10 @@ open class JZLongPressWeekView: JZBaseWeekView {
         case .move:
             guard let selectedCell else { return nil }
             pressView = longPressDataSource.weekView(self, movingCell: selectedCell, viewForMoveLongPressAt: startDate)
-            timeLabelWidth = max(selectedCell.bounds.width, textWidth)
+            timeLabelWidth = min(selectedCell.bounds.width, textWidth)
         case .addNew:
             pressView = longPressDataSource.weekView(self, viewForAddNewLongPressAt: startDate)
-            timeLabelWidth = max(widthInColumn, textWidth)
+            timeLabelWidth = min(widthInColumn, textWidth)
         }
         pressView.clipsToBounds = false
         longPressTimeLabel.frame = CGRect(x: 0, y: -labelHeight, width: timeLabelWidth, height: labelHeight)
