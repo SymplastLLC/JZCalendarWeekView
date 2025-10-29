@@ -34,6 +34,7 @@ open class JZBaseEvent: NSObject, NSCopying {
     public var isDimmed = false
     public var inParkingLot = false
     public var isAvailableForMoving: Bool = false
+    public var isAvailableForResizing: Bool = false
     
     public var data: Any?
     public var status: Any?
@@ -71,6 +72,7 @@ open class JZBaseEvent: NSObject, NSCopying {
         copyEvent.isAppointment = isAppointment
         copyEvent.inParkingLot = inParkingLot
         copyEvent.isAvailableForMoving = isAvailableForMoving
+        copyEvent.isAvailableForResizing = isAvailableForResizing
         copyEvent.data = data
         copyEvent.status = status
         copyEvent.zIndex = zIndex
@@ -94,6 +96,7 @@ open class SKBaseEvent<T>: JZBaseEvent {
         copyEvent.isAppointment = isAppointment
         copyEvent.inParkingLot = inParkingLot
         copyEvent.isAvailableForMoving = isAvailableForMoving
+        copyEvent.isAvailableForResizing = isAvailableForResizing
         copyEvent.data = data
         copyEvent.status = status
         copyEvent.zIndex = zIndex
