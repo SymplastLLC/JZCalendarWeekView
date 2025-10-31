@@ -186,7 +186,7 @@ open class JZLongPressWeekView: JZBaseWeekView {
     /// Enable smooth resistance at boundaries during resize
     public var enableBoundaryResistance: Bool = true
     /// The longPressTimeLabel along with shortPressView, can be customised
-    public var shortPressTimeLabel: UILabel = {
+    public var pressTimeLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 17)
         label.textColor = UIColor.white
@@ -254,21 +254,21 @@ open class JZLongPressWeekView: JZBaseWeekView {
 
     /// Update time label content, this method can be overridden
     open func updateTimeLabelText(time: Date) {
-        shortPressTimeLabel.text = " \(time.getTimeIgnoreSecondsFormat()) "
+        pressTimeLabel.text = " \(time.getTimeIgnoreSecondsFormat()) "
     }
 
     /// Update the position for the time label
     private func updateTimeLabelPosition(pointInSelfView: CGPoint) {
         guard let pressPosition else { return }
         let isOutsideLeftMargin = pointInSelfView.x - pressPosition.xToViewLeft < longPressLeftMarginX
-        shortPressTimeLabel.frame.origin.x = isOutsideLeftMargin ? currentEditingInfo.cellSize.width - shortPressTimeLabel.frame.width : 0
+        pressTimeLabel.frame.origin.x = isOutsideLeftMargin ? currentEditingInfo.cellSize.width - pressTimeLabel.frame.width : 0
 
         guard let shortPressView else { return }
-        let labelHeight = shortPressTimeLabel.frame.height
+        let labelHeight = pressTimeLabel.frame.height
         let isBeyondTopMargin = pointInSelfView.y - pressPosition.yToViewTop - labelHeight < longPressTopMarginY
         let yPosition = isBeyondTopMargin ? shortPressView.frame.height : -labelHeight
-        if shortPressTimeLabel.frame.origin.y != yPosition {
-            shortPressTimeLabel.frame.origin.y = yPosition
+        if pressTimeLabel.frame.origin.y != yPosition {
+            pressTimeLabel.frame.origin.y = yPosition
         }
     }
 
@@ -407,7 +407,7 @@ open class JZLongPressWeekView: JZBaseWeekView {
         // timeText width will change from 00:00 - 24:00, and for each time the length will be different
         // add 5 to ensure the max width
         let labelHeight: CGFloat = 20
-        let textWidth = UILabel.getLabelWidth(labelHeight, font: shortPressTimeLabel.font, text: "23:59 PM")
+        let textWidth = UILabel.getLabelWidth(labelHeight, font: pressTimeLabel.font, text: "23:59 PM")
         let timeLabelWidth: CGFloat
         
         let pressView: UIView
@@ -425,8 +425,8 @@ open class JZLongPressWeekView: JZBaseWeekView {
             timeLabelWidth = min(widthInColumn, textWidth)
         }
         pressView.clipsToBounds = false
-        shortPressTimeLabel.frame = CGRect(x: 0, y: -labelHeight, width: timeLabelWidth, height: labelHeight)
-        pressView.addSubview(shortPressTimeLabel)
+        pressTimeLabel.frame = CGRect(x: 0, y: -labelHeight, width: timeLabelWidth, height: labelHeight)
+        pressView.addSubview(pressTimeLabel)
         pressView.setDefaultShadow()
         return pressView
     }
@@ -548,7 +548,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     }
     
     private func resetDataForShortPress() {
-        shortPressTimeLabel.removeFromSuperview()
+        pressTimeLabel.removeFromSuperview()
         isShortPressing = false
         if !isResizingPressRecognized {
             pressPosition = nil
@@ -587,12 +587,25 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         let state = gesture.state
         let translationY = gesture.translation(in: longPressView.superview).y
         let pointInSelfView = gesture.location(in: self)
+        let pointInCollectionView = gesture.location(in: collectionView)
         
         switch state {
         case .began:
-            // Store initial frame for relative calculations
-            break
+            let labelHeight: CGFloat = 20
+            let textWidth = UILabel.getLabelWidth(labelHeight, font: pressTimeLabel.font, text: "23:59 PM")
+            let timeLabelWidth = min(longPressView.bounds.width, textWidth)
+            pressTimeLabel.frame = CGRect(
+                x: longPressView.frame.origin.x,
+                y: longPressView.frame.origin.y - labelHeight,
+                width: timeLabelWidth,
+                height: labelHeight
+            )
+            collectionView.addSubview(pressTimeLabel)
         case .changed:
+            let resizeDate = getShortPressViewStartDate(
+                pointInCollectionView: pointInCollectionView,
+                pointInSelfView: pointInSelfView
+            )
             // Calculate new top position using translation (smoother than direct positioning)
             let originalTopY = longPressView.frame.origin.y
             var newTopY = originalTopY + translationY
@@ -625,6 +638,11 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
 
                 // Update cellSize for consistency
                 currentEditingInfo.cellSize.height = newHeight
+                updateTimeLabelText(time: resizeDate)
+                pressTimeLabel.frame.origin = CGPoint(
+                    x: longPressView.frame.origin.x,
+                    y: longPressView.frame.origin.y - pressTimeLabel.frame.height
+                )
                 updateScroll(pointInSelfView: pointInSelfView)
                 // Reset translation for next iteration (smooth continuous dragging)
                 gesture.setTranslation(.zero, in: longPressView.superview)
@@ -632,6 +650,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         case .ended, .cancelled:
             // Gesture ended, finalize resize - could add snap-to-grid or inertia here if needed
             gesture.setTranslation(.zero, in: longPressView.superview)
+            pressTimeLabel.removeFromSuperview()
         default:
             break
         }
