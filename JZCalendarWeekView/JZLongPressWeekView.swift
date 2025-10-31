@@ -77,7 +77,7 @@ public protocol JZLongPressViewDataSource: AnyObject {
     
     func weekView(
         _ weekView: JZLongPressWeekView,
-        viewForResizingCell: UICollectionViewCell
+        viewForResizing cell: UICollectionViewCell
     ) -> UIView
 }
 
@@ -115,9 +115,9 @@ extension JZLongPressViewDataSource {
 
     public func weekView(
         _ weekView: JZLongPressWeekView,
-        viewForResizingCell: UICollectionViewCell
+        viewForResizing cell: UICollectionViewCell
     ) -> UIView {
-        createSnapshotView(for: viewForResizingCell)
+        createSnapshotView(for: cell)
     }
     
     private func createSnapshotView(for cell: UICollectionViewCell) -> UIView {
@@ -157,9 +157,11 @@ open class JZLongPressWeekView: JZBaseWeekView {
     private var currentPressType: LongPressType = .move
     private var shortPressView: UIView?
     private var longPressView: UIView?
+    private var upDotView: UIView?
+    private var downDotView: UIView?
     private var currentEditingInfo = CurrentEditingInfo()
     private lazy var coverViewForResizing: UIView = {
-        let coverView = UIView(frame: bounds)
+        let coverView = UIView(frame: collectionView.bounds)
         coverView.backgroundColor = .clear
         let tap = UITapGestureRecognizer(target: self, action: #selector(resetResizingModeTap))
         coverView.addGestureRecognizer(tap)
@@ -172,13 +174,17 @@ open class JZLongPressWeekView: JZBaseWeekView {
     public weak var longPressDataSource: JZLongPressViewDataSource?
 
     // You can modify these properties below
-    public var longPressTypes: [LongPressType] = [LongPressType]()
+    public var longPressTypes = [LongPressType]()
     /// It is used to identify the minimum time interval(Minute) when dragging the event view (minimum value is 1, maximum is 60)
     public var moveTimeMinInterval: Int = 15
     /// For an addNew event, the event duration mins determine the add new event duration and height
     public var addNewDurationMins: Int = 120
     /// Magic value to calculate date correctly
     public var magicDragYOffset: CGFloat = 0
+    /// Minimum height for resized events as a fraction of hour height (default: 0.5 = 30 mins)
+    public var minResizeHeightFraction: CGFloat = 0.5
+    /// Enable smooth resistance at boundaries during resize
+    public var enableBoundaryResistance: Bool = true
     /// The longPressTimeLabel along with shortPressView, can be customised
     public var shortPressTimeLabel: UILabel = {
         let label = UILabel()
@@ -273,7 +279,7 @@ open class JZLongPressWeekView: JZBaseWeekView {
         if isScrolling { return }
 
         // vertical
-        if pointInSelfView.y - pressPosition!.yToViewTop < longPressTopMarginY + 10 {
+        if let pressPosition, pointInSelfView.y - pressPosition.yToViewTop < longPressTopMarginY + 10 {
             isScrolling = true
             scrollingTo(direction: .up)
             return
@@ -304,22 +310,33 @@ open class JZLongPressWeekView: JZBaseWeekView {
     private func scrollingTo(direction: LongPressScrollDirection) {
         let currentOffset = collectionView.contentOffset
         let minOffsetY: CGFloat = 0, maxOffsetY = collectionView.contentSize.height - collectionView.bounds.height
-
+        let defaultOffset: CGFloat = 50
+        
         if direction == .up || direction == .down {
             let yOffset: CGFloat
 
             if direction == .up {
-                yOffset = max(minOffsetY, currentOffset.y - 50)
-                collectionView.setContentOffset(CGPoint(x: currentOffset.x, y: yOffset), animated: true)
+                yOffset = max(minOffsetY, currentOffset.y - defaultOffset)
+                if isResizingPressRecognized, let longPressView, let downDotView {
+                    UIView.animate(withDuration: 0.3) {
+                        longPressView.frame.origin.y -= defaultOffset
+                        //downDotView.frame.origin.y += defaultOffset
+                    }
+                }
             } else {
-                yOffset = min(maxOffsetY, currentOffset.y + 50)
-                collectionView.setContentOffset(CGPoint(x: currentOffset.x, y: yOffset), animated: true)
+                yOffset = min(maxOffsetY, currentOffset.y + defaultOffset)
+                if isResizingPressRecognized, let longPressView, let upDotView {
+                    UIView.animate(withDuration: 0.3) {
+                        longPressView.frame.size.height += defaultOffset
+                        //upDotView.frame.origin.y -= defaultOffset
+                    }
+                }
             }
+            collectionView.setContentOffset(CGPoint(x: currentOffset.x, y: yOffset), animated: true)
             // scrollview didEndAnimation will not set isScrolling, should be set manually
             if yOffset == minOffsetY || yOffset == maxOffsetY {
                 isScrolling = false
             }
-
         } else {
             var contentOffsetX: CGFloat
             switch scrollType {
@@ -359,18 +376,36 @@ open class JZLongPressWeekView: JZBaseWeekView {
         }
         return startDate
     }
+    
+    private func createDotView(
+        for parent: UIView,
+        onUp: Bool
+    ) -> UIView {
+        let dotView = UIView(
+            frame: CGRect(
+                origin: CGPoint(
+                    x: parent.frame.midX - 10,
+                    y: onUp ? parent.frame.origin.y - 5 : (parent.bounds.height + parent.frame.origin.y) - 15
+                ),
+                size: CGSize(width: 20, height: 20)
+            )
+        )
+        dotView.backgroundColor = UIColor.white
+        dotView.layer.cornerRadius = 10
+        dotView.layer.borderWidth = 2
+        dotView.layer.borderColor = UIColor.systemBlue.cgColor
+        return dotView
+    }
 
     /// Initialise the long press duration view with longPressTimeLabel.
     open func initLongPressView(
         selectedCell: UICollectionViewCell?
     ) -> UIView? {
         guard let longPressDataSource, let selectedCell else { return nil }
-        let pressView = longPressDataSource.weekView(self, viewForResizingCell: selectedCell)
-        pressView.clipsToBounds = false
-        pressView.setDefaultShadow()
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(resetResizingModeTap))
-        pressView.addGestureRecognizer(tapGesture)
-        return pressView
+        let snapshot = longPressDataSource.weekView(self, viewForResizing: selectedCell)
+        snapshot.clipsToBounds = false
+        snapshot.setDefaultShadow()
+        return snapshot
     }
     
     /// Initialise the long press view with longPressTimeLabel.
@@ -508,13 +543,17 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         }
 
         let hasItemAtPoint = collectionView.indexPathForItem(at: pointInCollectionView) != nil
-        // Long press should not begin if there are events at long press position and move not required
+        // Short press should not begin if there are events at short press position and move not required
         if hasItemAtPoint && !longPressTypes.contains(.move) {
             return false
         }
 
-        // Long press should not begin if no events at long press position and addNew not required
+        // Short press should not begin if no events at short press position and addNew not required
         if !hasItemAtPoint && !longPressTypes.contains(.addNew) {
+            return false
+        }
+        // Long press should not begin if no events at long press position and addNew not required
+        if !hasItemAtPoint && !longPressTypes.contains(.resize) {
             return false
         }
         return true
@@ -523,7 +562,9 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     private func resetDataForShortPress() {
         shortPressTimeLabel.removeFromSuperview()
         isShortPressing = false
-        pressPosition = nil
+        if !isResizingPressRecognized {
+            pressPosition = nil
+        }
 
         if currentPressType == .move {
             currentEditingInfo.allOpacityContentViews.forEach { $0.layer.opacity = 1 }
@@ -537,49 +578,189 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         currentEditingInfo.allOpacityContentViews.forEach { $0.layer.opacity = 1 }
         currentEditingInfo.allOpacityContentViews.removeAll()
         coverViewForResizing.removeFromSuperview()
-        collectionView.isUserInteractionEnabled = true
+        collectionView.isScrollEnabled = true
+        
         UIView.animate(withDuration: 0.3, delay: 0.0, options: .curveEaseOut, animations: {
             self.longPressView?.alpha = 0
+            self.upDotView?.alpha = 0
+            self.downDotView?.alpha = 0
         }, completion: { _ in
             self.longPressView?.removeFromSuperview()
+            self.upDotView?.removeFromSuperview()
+            self.downDotView?.removeFromSuperview()
+            self.upDotView = nil
+            self.downDotView = nil
         })
     }
     
-    
-    @objc private func resetResizingModeTap(_ gesture: UIGestureRecognizer) {
-        resetDataForLongPress()
-    }
+    @objc private func handleUpDotPanGesture(_ gesture: UIPanGestureRecognizer) {
+        guard let longPressView else { return }
 
-    @objc private func handleLongPress(_ gestureRecognizer: UILongPressGestureRecognizer) {
-        let state = gestureRecognizer.state
+        let state = gesture.state
+        let translationY = gesture.translation(in: longPressView.superview).y
+        let pointInSelfView = gesture.location(in: self)
         
         switch state {
         case .began:
-            let pointInSelfView = gestureRecognizer.location(in: self)
-            let pointInCollectionView = gestureRecognizer.location(in: collectionView)
+            // Store initial frame for relative calculations
+            break
+        case .changed:
+            // Calculate new top position using translation (smoother than direct positioning)
+            let originalTopY = longPressView.frame.origin.y
+            var newTopY = originalTopY + translationY
+
+            // Apply boundary constraints with smooth resistance
+            let minTopY = longPressTopMarginY
+            if newTopY < minTopY {
+                // Smooth resistance near boundary
+                let resistance = (minTopY - newTopY) * 0.3
+                newTopY = minTopY - resistance
+            }
+
+            let currentBottomY = longPressView.frame.maxY
+
+            // Calculate new height with minimum constraint
+            let minHeight = max(flowLayout.hourHeightForZoomLevel * 0.3, 20.0) // Minimum 0.5 hour or 20pt
+            let newHeight = max(currentBottomY - newTopY, minHeight)
+
+            guard newHeight > minHeight else {
+                // Reset translation for next iteration (smooth continuous dragging)
+                gesture.setTranslation(.zero, in: longPressView.superview)
+                return
+            }
+            // Only update if there's a meaningful change to prevent jitter
+            if abs(translationY) > 1.0 {
+                // Update frame smoothly
+                longPressView.frame.origin.y = newTopY
+                longPressView.frame.size.height = newHeight
+                upDotView?.frame.origin.y = newTopY - 5
+
+                // Update cellSize for consistency
+                currentEditingInfo.cellSize.height = newHeight
+                updateScroll(pointInSelfView: pointInSelfView)
+                // Reset translation for next iteration (smooth continuous dragging)
+                gesture.setTranslation(.zero, in: longPressView.superview)
+            }
+        case .ended, .cancelled:
+            // Gesture ended, finalize resize - could add snap-to-grid or inertia here if needed
+            gesture.setTranslation(.zero, in: longPressView.superview)
+        default:
+            break
+        }
+    }
+    
+    @objc private func handleDownDotPanGesture(_ gesture: UIPanGestureRecognizer) {
+        guard let longPressView else { return }
+
+        let state = gesture.state
+        let translationY = gesture.translation(in: longPressView.superview).y
+        let pointInSelfView = gesture.location(in: self)
+        
+        switch state {
+        case .began:
+            // Store initial state if needed
+            break
+        case .changed:
+            // Calculate new bottom position using translation (smoother than direct positioning)
+            let originalBottomY = longPressView.frame.maxY
+            var newBottomY = originalBottomY + translationY
+            
+            // Apply boundary constraints with smooth resistance
+            let maxBottomY = longPressBottomMarginY
+            if newBottomY > maxBottomY {
+                // Smooth resistance near boundary
+                let resistance = (newBottomY - maxBottomY) * 0.3
+                newBottomY = maxBottomY + resistance
+            }
+            
+            let currentTopY = longPressView.frame.minY
+            
+            // Calculate new height with minimum constraint
+            let minHeight = max(flowLayout.hourHeightForZoomLevel * 0.3, 20.0) // Minimum 0.5 hour or 20pt
+            let newHeight = max(newBottomY - currentTopY, minHeight)
+
+            guard newHeight > minHeight else {
+                // Reset translation for next iteration (smooth continuous dragging)
+                gesture.setTranslation(.zero, in: longPressView.superview)
+                return
+            }
+            // Only update if there's a meaningful change to prevent jitter
+            if abs(translationY) > 1.0 {
+                // Update frame smoothly (only height changes, origin stays the same)
+                longPressView.frame.size.height = newHeight
+                downDotView?.frame.origin.y = newBottomY - 15
+
+                // Update cellSize for consistency
+                currentEditingInfo.cellSize.height = newHeight
+                updateScroll(pointInSelfView: pointInSelfView)
+                // Reset translation for next iteration (smooth continuous dragging)
+                gesture.setTranslation(.zero, in: longPressView.superview)
+            }
+        case .ended, .cancelled:
+            // Gesture ended, finalize resize - could add snap-to-grid or inertia here if needed
+            gesture.setTranslation(.zero, in: longPressView.superview)
+        default:
+            break
+        }
+    }
+    
+    @objc private func resetResizingModeTap(_ gesture: UIGestureRecognizer) {
+        resetDataForLongPress()
+        pressPosition = nil
+    }
+
+    @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+        let state = gesture.state
+        
+        switch state {
+        case .began:
+            let pointInCollectionView = gesture.location(in: collectionView)
             if let indexPath = collectionView.indexPathForItem(at: pointInCollectionView),
                let currentCell = collectionView.cellForItem(at: indexPath),
                let event = (currentCell as? JZLongPressEventCell)?.event,
                event.isAvailableForResizing
             {
-                
                 isResizingPressRecognized = true
                 print("Распознан длинный long press!")
                 resetDataForShortPress()
                 shortPressView?.removeFromSuperview()
                 
-                let longPressPosition: (xToViewLeft: CGFloat, yToViewTop: CGFloat) = (pointInCollectionView.x - currentCell.frame.origin.x, pointInCollectionView.y - currentCell.frame.origin.y)
+                collectionView.addSubview(coverViewForResizing)
+                collectionView.isScrollEnabled = false
+                
+                let longPressPosition: (xToViewLeft: CGFloat, yToViewTop: CGFloat) = (
+                    pointInCollectionView.x - currentCell.frame.origin.x,
+                    pointInCollectionView.y - currentCell.frame.origin.y
+                )
+                pressPosition = longPressPosition
                 longPressView = initLongPressView(selectedCell: currentCell)
-                longPressView?.frame.size = currentCell.frame.size
+                longPressView?.frame = currentCell.frame
                 longPressView?.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)
                 if let longPressView {
-                    addSubview(longPressView)
+                    collectionView.addSubview(longPressView)
                 }
                 
-                longPressView?.center = CGPoint(
-                    x: pointInSelfView.x - longPressPosition.xToViewLeft + currentCell.frame.width * 0.5,
-                    y: pointInSelfView.y - longPressPosition.yToViewTop + currentCell.frame.height * 0.5
+                let panDownDotGesture = UIPanGestureRecognizer(
+                    target: self,
+                    action: #selector(handleDownDotPanGesture)
                 )
+                let panUpDotGesture = UIPanGestureRecognizer(
+                    target: self,
+                    action: #selector(handleUpDotPanGesture)
+                )
+                let upDot = createDotView(for: currentCell, onUp: true)
+                let downDot = createDotView(for: currentCell, onUp: false)
+                upDot.clipsToBounds = false
+                upDot.setDefaultShadow()
+                downDot.clipsToBounds = false
+                downDot.setDefaultShadow()
+                collectionView.addSubview(upDot)
+                collectionView.addSubview(downDot)
+                upDot.addGestureRecognizer(panUpDotGesture)
+                downDot.addGestureRecognizer(panDownDotGesture)
+                // Store references to the dots for repositioning during resize
+                upDotView = upDot
+                downDotView = downDot
                 
                 currentEditingInfo.cellSize = currentCell.frame.size
                 currentEditingInfo.event = event
@@ -594,13 +775,11 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                     usingSpringWithDamping: 0.8,
                     initialSpringVelocity: 5,
                     options: .curveEaseOut,
-                    animations: {
-                        self.longPressView?.transform = CGAffineTransform.identity
+                    animations: { [weak self] in
+                        self?.longPressView?.transform = CGAffineTransform.identity
                     }
                 )
                 currentPressType = .resize
-                collectionView.isUserInteractionEnabled = false
-                addSubview(coverViewForResizing)
             }
         case .cancelled where isResizingPressRecognized:
             longPressDelegate?.weekView(
@@ -617,18 +796,18 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     /// The basic shortPressView position logic is moving with your finger's original position.
     /// - The Move type shortPressView will keep the relative position during this longPress, that's how Apple Calendar did.
     /// - The AddNew type shortPressView will be created centrally at your finger press position
-    @objc private func handleShortPress(_ gestureRecognizer: UILongPressGestureRecognizer) {
+    @objc private func handleShortPress(_ gesture: UILongPressGestureRecognizer) {
         if isResizingPressRecognized {
             resetDataForShortPress()
             shortPressView?.removeFromSuperview()
             return
         }
         
-        let pointInSelfView = gestureRecognizer.location(in: self)
+        let pointInSelfView = gesture.location(in: self)
         /// Used for get startDate of shortPressView
-        let pointInCollectionView = gestureRecognizer.location(in: collectionView)
+        let pointInCollectionView = gesture.location(in: collectionView)
 
-        let state = gestureRecognizer.state
+        let state = gesture.state
         var currentMovingCell: UICollectionViewCell?
         
         if isShortPressing == false {
