@@ -317,20 +317,8 @@ open class JZLongPressWeekView: JZBaseWeekView {
 
             if direction == .up {
                 yOffset = max(minOffsetY, currentOffset.y - defaultOffset)
-                if isResizingPressRecognized, let longPressView, let downDotView {
-                    UIView.animate(withDuration: 0.3) {
-                        longPressView.frame.origin.y -= defaultOffset
-                        //downDotView.frame.origin.y += defaultOffset
-                    }
-                }
             } else {
                 yOffset = min(maxOffsetY, currentOffset.y + defaultOffset)
-                if isResizingPressRecognized, let longPressView, let upDotView {
-                    UIView.animate(withDuration: 0.3) {
-                        longPressView.frame.size.height += defaultOffset
-                        //upDotView.frame.origin.y -= defaultOffset
-                    }
-                }
             }
             collectionView.setContentOffset(CGPoint(x: currentOffset.x, y: yOffset), animated: true)
             // scrollview didEndAnimation will not set isScrolling, should be set manually
@@ -610,7 +598,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
             var newTopY = originalTopY + translationY
 
             // Apply boundary constraints with smooth resistance
-            let minTopY = longPressTopMarginY
+            let minTopY = collectionView.bounds.minY
             if newTopY < minTopY {
                 // Smooth resistance near boundary
                 let resistance = (minTopY - newTopY) * 0.3
@@ -666,7 +654,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
             var newBottomY = originalBottomY + translationY
             
             // Apply boundary constraints with smooth resistance
-            let maxBottomY = longPressBottomMarginY
+            let maxBottomY = collectionView.bounds.maxY
             if newBottomY > maxBottomY {
                 // Smooth resistance near boundary
                 let resistance = (newBottomY - maxBottomY) * 0.3
