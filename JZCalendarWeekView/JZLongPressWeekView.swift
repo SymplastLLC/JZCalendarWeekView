@@ -665,7 +665,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 updateTimeLabelText(time: resizeDate)
                 pressTimeLabel.frame.origin = CGPoint(
                     x: longPressView.frame.origin.x,
-                    y: newTopY - labelHeight - magicDragYOffset
+                    y: (newTopY - labelHeight) + magicDragYOffset
                 )
                 updateScroll(pointInSelfView: pointInSelfView)
                 // Reset translation for next iteration (smooth continuous dragging)
