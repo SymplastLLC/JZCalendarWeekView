@@ -656,11 +656,16 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
 
                 // Update cellSize for consistency
                 currentEditingInfo.cellSize.height = newHeight
-                let resizeDate = getDateForPoint(longPressView.frame.origin)
+                let resizeDate = getDateForPoint(
+                    CGPoint(
+                        x: longPressView.frame.origin.x,
+                        y: longPressView.frame.origin.y - magicDragYOffset
+                    )
+                )
                 updateTimeLabelText(time: resizeDate)
                 pressTimeLabel.frame.origin = CGPoint(
                     x: longPressView.frame.origin.x,
-                    y: newTopY - labelHeight
+                    y: newTopY - labelHeight - magicDragYOffset
                 )
                 updateScroll(pointInSelfView: pointInSelfView)
                 // Reset translation for next iteration (smooth continuous dragging)
@@ -730,7 +735,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 let resizeDate = getDateForPoint(
                     CGPoint(
                         x: longPressView.frame.origin.x,
-                        y: updatedMaxY
+                        y: updatedMaxY - magicDragYOffset
                     )
                 )
                 updateTimeLabelText(time: resizeDate)
