@@ -755,11 +755,16 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         if let longPressView,
            let event = currentEditingInfo.event,
            longPressView.frame.height != currentEditingInfo.originalCellSize.height {
-            let startDate = getDateForPoint(longPressView.frame.origin)
+            let startDate = getDateForPoint(
+                CGPoint(
+                    x: longPressView.frame.origin.x,
+                    y: longPressView.frame.origin.y - magicDragYOffset
+                )
+            )
             let endDate = getDateForPoint(
                 CGPoint(
                     x: longPressView.frame.origin.x,
-                    y: longPressView.frame.origin.y + longPressView.frame.height
+                    y: longPressView.frame.origin.y + longPressView.frame.height - magicDragYOffset
                 )
             )
             longPressDelegate?.weekView(
