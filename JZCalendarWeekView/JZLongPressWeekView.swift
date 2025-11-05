@@ -264,7 +264,7 @@ open class JZLongPressWeekView: JZBaseWeekView {
             target: self,
             action: #selector(handleLongPress)
         )
-        longPress.minimumPressDuration = 2.0
+        longPress.minimumPressDuration = 1.5
         longPress.delegate = self
         collectionView.addGestureRecognizer(longPress)
     }
