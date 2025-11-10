@@ -52,6 +52,16 @@ class LongPressViewController: UIViewController {
         // Optional
         calendarWeekView.addNewDurationMins = 120
         calendarWeekView.moveTimeMinInterval = calendarWeekView.zoom.value.division.rawValue
+        calendarWeekView.parkingLotArea = CGRect(
+            origin: CGPoint(
+                x: view.bounds.width - 60,
+                y: view.bounds.height - 60
+            ),
+            size: CGSize(
+                width: 70,
+                height: 70
+            )
+        )
     }
 
     /// For example only
@@ -83,8 +93,9 @@ extension LongPressViewController: JZLongPressViewDelegate, JZLongPressViewDataS
         _ weekView: JZLongPressWeekView,
         didEndAddNewLongPressAt startDate: Date,
         in column: Int,
-        longPressEndLocation: CGPoint
+        insideParkingLotArea: Bool
     ) {
+        print("Drop inside parking lot area", insideParkingLotArea)
         let newEvent = AllDayEvent(
             id: UUID().uuidString,
             title: "New Event",
@@ -108,8 +119,9 @@ extension LongPressViewController: JZLongPressViewDelegate, JZLongPressViewDataS
         editingEvent: JZBaseEvent,
         didEndMoveLongPressAt startDate: Date,
         in column: Int,
-        longPressEndLocation: CGPoint
+        insideParkingLotArea: Bool
     ) {
+        print("Drop inside parking lot area", insideParkingLotArea)
         guard let event = editingEvent as? AllDayEvent else { return }
         let duration = Calendar.current.dateComponents([.minute], from: event.startDate, to: event.endDate).minute!
         let selectedIndex = viewModel.events.firstIndex(where: { $0.id == event.id })!

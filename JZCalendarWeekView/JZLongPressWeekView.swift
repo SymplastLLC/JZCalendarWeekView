@@ -21,7 +21,7 @@ public protocol JZLongPressViewDelegate: AnyObject {
         _ weekView: JZLongPressWeekView,
         didEndAddNewLongPressAt startDate: Date,
         in column: Int,
-        longPressEndLocation: CGPoint
+        insideParkingLotArea: Bool
     )
 
     /// When Move long press gesture ends, this function will be called.
@@ -35,7 +35,7 @@ public protocol JZLongPressViewDelegate: AnyObject {
         editingEvent: JZBaseEvent,
         didEndMoveLongPressAt startDate: Date,
         in column: Int,
-        longPressEndLocation: CGPoint
+        insideParkingLotArea: Bool
     )
 
     /// Sometimes the longPress will be cancelled because some curtain reason.
@@ -111,7 +111,7 @@ extension JZLongPressViewDelegate {
         editingEvent: JZBaseEvent,
         didEndMoveLongPressAt startDate: Date,
         in column: Int,
-        longPressEndLocation: CGPoint
+        insideParkingLotArea: Bool
     ) {}
     public func weekView(
         _ weekView: JZLongPressWeekView,
@@ -182,6 +182,7 @@ open class JZLongPressWeekView: JZBaseWeekView {
     private var longPressView: UIView?
     private var upDotView: UIView?
     private var downDotView: UIView?
+    private var parkingCornerView: UIView?
     private var currentEditingInfo = CurrentEditingInfo()
     private lazy var coverViewForResizing: UIView = {
         let coverView = UIView(frame: collectionView.bounds)
@@ -205,9 +206,10 @@ open class JZLongPressWeekView: JZBaseWeekView {
     /// Magic value to calculate date correctly
     public var magicDragYOffset: CGFloat = 0
     /// Minimum height for resized events as a fraction of hour height (default: 0.5 = 30 mins)
-    public var minResizeHeightFraction: CGFloat = 0.5
-    /// Enable smooth resistance at boundaries during resize
-    public var enableBoundaryResistance: Bool = true
+    public var minResizeHeightFraction: CGFloat = 0.3
+    /// Parking lot area to handle drag & drop inside
+    public var parkingLotArea: CGRect?
+    public var parkingLotIcon: UIImage? = UIImage(systemName: "parkingsign")
     /// The longPressTimeLabel along with shortPressView, can be customised
     public var pressTimeLabel: UILabel = {
         let label = UILabel()
@@ -639,7 +641,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
             let currentBottomY = longPressView.frame.maxY
 
             // Calculate new height with minimum constraint
-            let minHeight = max(flowLayout.hourHeightForZoomLevel * 0.3, 20.0) // Minimum 0.5 hour or 20pt
+            let minHeight = max(flowLayout.hourHeightForZoomLevel * minResizeHeightFraction, 20.0) // Minimum 0.5 hour or 20pt
             let newHeight = max(currentBottomY - newTopY, minHeight)
 
             guard newHeight > minHeight else {
@@ -715,7 +717,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
             let currentTopY = longPressView.frame.minY
             
             // Calculate new height with minimum constraint
-            let minHeight = max(flowLayout.hourHeightForZoomLevel * 0.3, 20.0) // Minimum 0.5 hour or 20pt
+            let minHeight = max(flowLayout.hourHeightForZoomLevel * minResizeHeightFraction, 20.0) // Minimum 0.5 hour or 20pt
             let newHeight = max(newBottomY - currentTopY, minHeight)
 
             guard newHeight > minHeight else {
@@ -981,6 +983,33 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                     x: pointInSelfView.x - pressPosition.xToViewLeft + currentEditingInfo.cellSize.width/2,
                     y: topYPoint + currentEditingInfo.cellSize.height/2
                 )
+                if parkingCornerView == nil,
+                   let parkingLotIcon,
+                   let shortPressView,
+                   let parkingLotArea,
+                   parkingLotArea.intersects(shortPressView.frame) {
+                    let parkingView = UIView(
+                        frame: CGRect(
+                            x: 0,
+                            y: 0,
+                            width: 30,
+                            height: 30
+                        )
+                    )
+                    let plImageView = UIImageView(image: parkingLotIcon)
+                    plImageView.contentMode = .scaleAspectFit
+                    plImageView.frame = CGRect(x: 0, y: 0, width: 30, height: 30)
+                    parkingView.addSubview(plImageView)
+                    shortPressView.addSubview(parkingView)
+                    parkingCornerView = parkingView
+                } else if let parkingCornerView,
+                          let shortPressView,
+                          let parkingLotArea,
+                          !parkingLotArea.intersects(shortPressView.frame) {
+                    self.parkingCornerView?.removeFromSuperview()
+                    self.parkingCornerView = nil
+                }
+
             }
         case .cancelled where isAvailableForMoving:
             UIView.animate(withDuration: 0.3, delay: 0.0, options: .curveEaseOut, animations: {
@@ -1017,7 +1046,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                         self,
                         didEndAddNewLongPressAt: shortPressViewStartDate,
                         in: column,
-                        longPressEndLocation: pointInSelfView
+                        insideParkingLotArea: parkingCornerView != nil
                     )
                 case .move:
                     if let currentEditEvent = currentEditingInfo.event, !Calendar.current.isDate(
@@ -1030,7 +1059,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                             editingEvent: currentEditEvent,
                             didEndMoveLongPressAt: shortPressViewStartDate,
                             in: column,
-                            longPressEndLocation: pointInSelfView
+                            insideParkingLotArea: parkingCornerView != nil
                         )
                     }
                 case .resize:
