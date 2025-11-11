@@ -104,7 +104,7 @@ extension JZLongPressViewDelegate {
         _ weekView: JZLongPressWeekView,
         didEndAddNewLongPressAt startDate: Date,
         in column: Int,
-        longPressEndLocation: CGPoint
+        insideParkingLotArea: Bool
     ) {}
     public func weekView(
         _ weekView: JZLongPressWeekView,
