@@ -990,19 +990,21 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                    parkingLotArea.intersects(shortPressView.frame) {
                     let parkingView = UIView(
                         frame: CGRect(
-                            x: 0,
-                            y: 0,
+                            x: 5,
+                            y: 5,
                             width: 30,
                             height: 30
                         )
                     )
+                    parkingView.backgroundColor = .white
+                    parkingView.layer.cornerRadius = 15
                     let plImageView = UIImageView(image: parkingLotIcon)
                     plImageView.contentMode = .scaleAspectFit
-                    plImageView.frame = CGRect(x: 0, y: 0, width: 30, height: 30)
+                    plImageView.frame = CGRect(x: 5, y: 5, width: 20, height: 20)
                     parkingView.addSubview(plImageView)
                     shortPressView.addSubview(parkingView)
                     parkingCornerView = parkingView
-                } else if let parkingCornerView,
+                } else if parkingCornerView != nil,
                           let shortPressView,
                           let parkingLotArea,
                           !parkingLotArea.intersects(shortPressView.frame) {
