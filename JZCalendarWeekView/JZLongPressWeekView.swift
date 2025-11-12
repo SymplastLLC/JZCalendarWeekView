@@ -998,7 +998,12 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                     )
                     parkingView.backgroundColor = .white
                     parkingView.layer.cornerRadius = 15
-                    let plImageView = UIImageView(image: parkingLotIcon)
+                    let plImageView = UIImageView(
+                        image: parkingLotIcon.withTintColor(
+                            .systemBlue,
+                            renderingMode: .alwaysTemplate
+                        )
+                    )
                     plImageView.contentMode = .scaleAspectFit
                     plImageView.frame = CGRect(x: 5, y: 5, width: 20, height: 20)
                     parkingView.addSubview(plImageView)
