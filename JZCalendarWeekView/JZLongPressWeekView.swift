@@ -926,6 +926,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         isPickViewPressRecognized = true
         resetResizingMode()
         currentPressType = .pickView
+        
         let state = gesture.state
         switch state {
         case .began:
