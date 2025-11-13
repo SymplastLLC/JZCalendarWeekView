@@ -47,7 +47,7 @@ class LongPressViewController: UIViewController {
         // LongPress delegate, datasorce and type setup
         calendarWeekView.longPressDelegate = self
         calendarWeekView.longPressDataSource = self
-        calendarWeekView.longPressTypes = [.addNew, .move, .resize]
+        calendarWeekView.longPressTypes = [.addNew, .move, .resize, .pickView]
 
         // Optional
         calendarWeekView.addNewDurationMins = 120
@@ -88,7 +88,15 @@ extension LongPressViewController: JZBaseViewDelegate {
 
 // LongPress core
 extension LongPressViewController: JZLongPressViewDelegate, JZLongPressViewDataSource {
-
+    func weekView(
+        _ weekView: JZLongPressWeekView,
+        event: JZBaseEvent,
+        didPickViewWith gesture: UILongPressGestureRecognizer,
+        pressLoaction: CGPoint
+    ) {
+        print(event, pressLoaction)
+    }
+    
     func weekView(
         _ weekView: JZLongPressWeekView,
         didEndAddNewLongPressAt startDate: Date,

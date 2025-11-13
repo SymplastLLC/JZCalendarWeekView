@@ -61,6 +61,13 @@ public protocol JZLongPressViewDelegate: AnyObject {
         didEndResizingAt startDate: Date,
         endDate: Date
     )
+    
+    func weekView(
+        _ weekView: JZLongPressWeekView,
+        event: JZBaseEvent,
+        didPickViewWith gesture: UILongPressGestureRecognizer,
+        pressLoaction: CGPoint
+    )
 }
 
 public protocol JZLongPressViewDataSource: AnyObject {
@@ -123,6 +130,12 @@ extension JZLongPressViewDelegate {
         didEndResizingAt startDate: Date,
         endDate: Date
     ) {}
+    public func weekView(
+        _ weekView: JZLongPressWeekView,
+        event: JZBaseEvent,
+        didPickViewWith gesture: UILongPressGestureRecognizer,
+        pressLoaction: CGPoint
+    ) {}
 }
 
 extension JZLongPressViewDataSource {
@@ -162,6 +175,8 @@ open class JZLongPressWeekView: JZBaseWeekView {
         case move
         /// when long press position is on a existed event, this type will allow user to resize the existed event
         case resize
+        /// when very long press position is on a existed event, this type will allow user to open the pick view
+        case pickView
     }
 
     /// This structure is used to save editing information before reusing collectionViewCell (Type Move used only)
@@ -198,7 +213,11 @@ open class JZLongPressWeekView: JZBaseWeekView {
     public weak var longPressDataSource: JZLongPressViewDataSource?
 
     // You can modify these properties below
-    public var longPressTypes = [LongPressType]()
+    public var longPressTypes = [LongPressType]() {
+        didSet {
+            setupGestures()
+        }
+    }
     /// It is used to identify the minimum time interval(Minute) when dragging the event view (minimum value is 1, maximum is 60)
     public var moveTimeMinInterval: Int = 15
     /// For an addNew event, the event duration mins determine the add new event duration and height
@@ -244,31 +263,57 @@ open class JZLongPressWeekView: JZBaseWeekView {
     open var longPressRightMarginX: CGFloat { frame.width }
     
     private var isResizingPressRecognized = false
+    private var isPickViewPressRecognized = false
 
     public override init(frame: CGRect) {
         super.init(frame: frame)
-        setupGestures()
     }
 
     required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
-        setupGestures()
     }
 
     private func setupGestures() {
-        let shortPress = UILongPressGestureRecognizer(
-            target: self,
-            action: #selector(handleShortPress)
-        )
-        shortPress.delegate = self
-        collectionView.addGestureRecognizer(shortPress)
-        let longPress = UILongPressGestureRecognizer(
-            target: self,
-            action: #selector(handleLongPress)
-        )
-        longPress.minimumPressDuration = 1.5
-        longPress.delegate = self
-        collectionView.addGestureRecognizer(longPress)
+        if longPressTypes.contains(.move) || longPressTypes.contains(.addNew) {
+            let shortPress = UILongPressGestureRecognizer(
+                target: self,
+                action: #selector(handleShortPress)
+            )
+            shortPress.delegate = self
+            collectionView.addGestureRecognizer(shortPress)
+        }
+        if longPressTypes.contains(.resize) {
+            let longPress = UILongPressGestureRecognizer(
+                target: self,
+                action: #selector(handleLongPress)
+            )
+            let isOnlyResizeType = longPressTypes.count == 1 && longPressTypes.first == .resize
+            let isNotMoveOrAddNewType = !longPressTypes.contains(.move) && !longPressTypes.contains(.addNew)
+            
+            longPress.minimumPressDuration = isOnlyResizeType && isNotMoveOrAddNewType ? 0.5 : 1.5
+            longPress.delegate = self
+            collectionView.addGestureRecognizer(longPress)
+        }
+        if longPressTypes.contains(.pickView) {
+            let veryLongPress = UILongPressGestureRecognizer(
+                target: self,
+                action: #selector(handleVeryLongPress)
+            )
+            let isOnlyPickViewType = longPressTypes.count == 1 && longPressTypes.first == .pickView
+            let hasMoveOrAddNewType = longPressTypes.contains(.move) || longPressTypes.contains(.addNew)
+            let hasResizeType = longPressTypes.contains(.resize)
+            let minPressDuration: TimeInterval
+            if isOnlyPickViewType {
+                minPressDuration = 0.5
+            } else if hasMoveOrAddNewType && hasResizeType {
+                minPressDuration = 3
+            } else {
+                minPressDuration = 1.5
+            }
+            veryLongPress.minimumPressDuration = minPressDuration
+            veryLongPress.delegate = self
+            collectionView.addGestureRecognizer(veryLongPress)
+        }
     }
 
     /// Updating time label in shortPressView during dragging
@@ -448,6 +493,8 @@ open class JZLongPressWeekView: JZBaseWeekView {
         case .addNew:
             pressView = longPressDataSource.weekView(self, viewForAddNewLongPressAt: startDate)
             timeLabelWidth = min(widthInColumn, textWidth)
+        case .pickView:
+            return nil
         }
         pressView.clipsToBounds = false
         pressTimeLabel.frame = CGRect(x: 0, y: -labelHeight, width: timeLabelWidth, height: labelHeight)
@@ -490,7 +537,11 @@ open class JZLongPressWeekView: JZBaseWeekView {
     // Following three functions are used to Handle collectionView items reusued
 
     /// when the previous cell is reused, have to find current one
-    open func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+    open func collectionView(
+        _ collectionView: UICollectionView,
+        willDisplay cell: UICollectionViewCell,
+        forItemAt indexPath: IndexPath
+    ) {
         guard isShortPressing == true
                 && (currentPressType == .move
                     || currentPressType == .resize) else { return }
@@ -565,8 +616,12 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         if !hasItemAtPoint && !longPressTypes.contains(.addNew) {
             return false
         }
-        // Long press should not begin if no events at long press position and addNew not required
+        // Long press should not begin if no events at long press position and resize not required
         if !hasItemAtPoint && !longPressTypes.contains(.resize) {
+            return false
+        }
+        // Long press should not begin if no events at long press position and pick not required
+        if !hasItemAtPoint && !longPressTypes.contains(.pickView) {
             return false
         }
         return true
@@ -780,7 +835,6 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 didEndResizingAt: startDate,
                 endDate: endDate
             )
-            print(startDate, endDate)
         }
         resetResizingMode()
     }
@@ -793,6 +847,10 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     }
 
     @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+        if isPickViewPressRecognized {
+            resetResizingMode()
+            return
+        }
         let state = gesture.state
         
         switch state {
@@ -872,6 +930,39 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         }
     }
     
+    @objc private func handleVeryLongPress(_ gesture: UILongPressGestureRecognizer) {
+        guard currentPressType != .addNew else { return }
+        
+        isPickViewPressRecognized = true
+        currentPressType = .pickView
+        let state = gesture.state
+        switch state {
+        case .began:
+            let pointInSelfView = gesture.location(in: self)
+            let pointInCollectionView = gesture.location(in: collectionView)
+            if let indexPath = collectionView.indexPathForItem(at: pointInCollectionView),
+               let currentCell = collectionView.cellForItem(at: indexPath),
+               let event = (currentCell as? JZLongPressEventCell)?.event {
+                longPressDelegate?.weekView(
+                    self,
+                    event: event,
+                    didPickViewWith: gesture,
+                    pressLoaction: pointInSelfView
+                )
+            }
+        case .cancelled, .failed, .ended:
+            isPickViewPressRecognized = false
+            currentPressType = .move
+            longPressDelegate?.weekView(
+                self,
+                longPressType: .pickView,
+                didCancelLongPressAt: nil
+            )
+        default:
+            break
+        }
+    }
+    
     /// The basic shortPressView position logic is moving with your finger's original position.
     /// - The Move type shortPressView will keep the relative position during this longPress, that's how Apple Calendar did.
     /// - The AddNew type shortPressView will be created centrally at your finger press position
@@ -879,6 +970,8 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         if isResizingPressRecognized {
             resetDataForShortPress()
             shortPressView?.removeFromSuperview()
+            return
+        } else if isPickViewPressRecognized {
             return
         }
         
@@ -935,7 +1028,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 }
             case .move:
                 return
-            case .resize:
+            case .resize, .pickView:
                 break
             }
             let longPressDate = getShortPressViewStartDate(
@@ -1016,7 +1109,6 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                     self.parkingCornerView?.removeFromSuperview()
                     self.parkingCornerView = nil
                 }
-
             }
         case .cancelled where isAvailableForMoving:
             UIView.animate(withDuration: 0.3, delay: 0.0, options: .curveEaseOut, animations: {
@@ -1069,7 +1161,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                             insideParkingLotArea: parkingCornerView != nil
                         )
                     }
-                case .resize:
+                case .resize, .pickView:
                     break
                 }
             }
