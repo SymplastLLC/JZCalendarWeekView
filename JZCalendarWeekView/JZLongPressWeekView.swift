@@ -647,18 +647,11 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         currentEditingInfo.allOpacityContentViews.removeAll()
         coverViewForResizing.removeFromSuperview()
         collectionView.isScrollEnabled = true
-        
-        UIView.animate(withDuration: 0.3, delay: 0.0, options: .curveEaseOut, animations: {
-            self.longPressView?.alpha = 0
-            self.upDotView?.alpha = 0
-            self.downDotView?.alpha = 0
-        }, completion: { _ in
-            self.longPressView?.removeFromSuperview()
-            self.upDotView?.removeFromSuperview()
-            self.downDotView?.removeFromSuperview()
-            self.upDotView = nil
-            self.downDotView = nil
-        })
+        longPressView?.removeFromSuperview()
+        upDotView?.removeFromSuperview()
+        downDotView?.removeFromSuperview()
+        upDotView = nil
+        downDotView = nil
     }
     
     @objc private func handleUpDotPanGesture(_ gesture: UIPanGestureRecognizer) {
