@@ -847,12 +847,9 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     }
 
     @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
-        if isPickViewPressRecognized {
-            resetResizingMode()
-            return
-        }
-        let state = gesture.state
+        guard !isPickViewPressRecognized else { return }
         
+        let state = gesture.state
         switch state {
         case .began:
             let pointInCollectionView = gesture.location(in: collectionView)
@@ -934,6 +931,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         guard currentPressType != .addNew else { return }
         
         isPickViewPressRecognized = true
+        resetResizingMode()
         currentPressType = .pickView
         let state = gesture.state
         switch state {
