@@ -92,9 +92,10 @@ extension LongPressViewController: JZLongPressViewDelegate, JZLongPressViewDataS
         _ weekView: JZLongPressWeekView,
         event: JZBaseEvent,
         didPickViewWith gesture: UILongPressGestureRecognizer,
-        pressLoaction: CGPoint
+        pressLocation: CGPoint,
+        sourceView: UICollectionViewCell
     ) {
-        print(event, pressLoaction)
+        print(event, pressLocation, sourceView)
     }
     
     func weekView(

@@ -66,7 +66,8 @@ public protocol JZLongPressViewDelegate: AnyObject {
         _ weekView: JZLongPressWeekView,
         event: JZBaseEvent,
         didPickViewWith gesture: UILongPressGestureRecognizer,
-        pressLoaction: CGPoint
+        pressLocation: CGPoint,
+        sourceView: UICollectionViewCell
     )
 }
 
@@ -134,7 +135,8 @@ extension JZLongPressViewDelegate {
         _ weekView: JZLongPressWeekView,
         event: JZBaseEvent,
         didPickViewWith gesture: UILongPressGestureRecognizer,
-        pressLoaction: CGPoint
+        pressLocation: CGPoint,
+        sourceView: UICollectionViewCell
     ) {}
 }
 
@@ -951,7 +953,8 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                     self,
                     event: event,
                     didPickViewWith: gesture,
-                    pressLoaction: pointInSelfView
+                    pressLocation: pointInSelfView,
+                    sourceView: currentCell
                 )
             }
         case .cancelled, .failed, .ended:
