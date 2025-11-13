@@ -213,11 +213,7 @@ open class JZLongPressWeekView: JZBaseWeekView {
     public weak var longPressDataSource: JZLongPressViewDataSource?
 
     // You can modify these properties below
-    public var longPressTypes = [LongPressType]() {
-        didSet {
-            setupGestures()
-        }
-    }
+    public var longPressTypes = [LongPressType]()
     /// It is used to identify the minimum time interval(Minute) when dragging the event view (minimum value is 1, maximum is 60)
     public var moveTimeMinInterval: Int = 15
     /// For an addNew event, the event duration mins determine the add new event duration and height
@@ -267,10 +263,12 @@ open class JZLongPressWeekView: JZBaseWeekView {
 
     public override init(frame: CGRect) {
         super.init(frame: frame)
+        setupGestures()
     }
 
     required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
+        setupGestures()
     }
 
     private func setupGestures() {
