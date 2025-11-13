@@ -264,6 +264,45 @@ open class JZLongPressWeekView: JZBaseWeekView {
     
     private var isResizingPressRecognized = false
     private var isPickViewPressRecognized = false
+    private lazy var shortLongPress: UILongPressGestureRecognizer = {
+        let shortPress = UILongPressGestureRecognizer(
+            target: self,
+            action: #selector(handleShortPress)
+        )
+        shortPress.delegate = self
+        return shortPress
+    }()
+    private lazy var longPress: UILongPressGestureRecognizer = {
+        let longPress = UILongPressGestureRecognizer(
+            target: self,
+            action: #selector(handleLongPress)
+        )
+        let isOnlyResizeType = longPressTypes.count == 1 && longPressTypes.first == .resize
+        let isNotMoveOrAddNewType = !longPressTypes.contains(.move) && !longPressTypes.contains(.addNew)
+        longPress.minimumPressDuration = isOnlyResizeType && isNotMoveOrAddNewType ? 0.5 : 1.5
+        longPress.delegate = self
+        return longPress
+    }()
+    private lazy var veryLongPress: UILongPressGestureRecognizer = {
+        let veryLongPress = UILongPressGestureRecognizer(
+            target: self,
+            action: #selector(handleVeryLongPress)
+        )
+        let isOnlyPickViewType = longPressTypes.count == 1 && longPressTypes.first == .pickView
+        let hasMoveOrAddNewType = longPressTypes.contains(.move) || longPressTypes.contains(.addNew)
+        let hasResizeType = longPressTypes.contains(.resize)
+        let minPressDuration: TimeInterval
+        if isOnlyPickViewType {
+            minPressDuration = 0.5
+        } else if hasMoveOrAddNewType && hasResizeType {
+            minPressDuration = 3
+        } else {
+            minPressDuration = 1.5
+        }
+        veryLongPress.minimumPressDuration = minPressDuration
+        veryLongPress.delegate = self
+        return veryLongPress
+    }()
 
     public override init(frame: CGRect) {
         super.init(frame: frame)
@@ -274,46 +313,17 @@ open class JZLongPressWeekView: JZBaseWeekView {
     }
 
     private func setupGestures() {
-        collectionView.gestureRecognizers?.removeAll()
+        collectionView.removeGestureRecognizer(shortLongPress)
+        collectionView.removeGestureRecognizer(longPress)
+        collectionView.removeGestureRecognizer(veryLongPress)
 
         if longPressTypes.contains(.move) || longPressTypes.contains(.addNew) {
-            let shortPress = UILongPressGestureRecognizer(
-                target: self,
-                action: #selector(handleShortPress)
-            )
-            shortPress.delegate = self
-            collectionView.addGestureRecognizer(shortPress)
+            collectionView.addGestureRecognizer(shortLongPress)
         }
         if longPressTypes.contains(.resize) {
-            let longPress = UILongPressGestureRecognizer(
-                target: self,
-                action: #selector(handleLongPress)
-            )
-            let isOnlyResizeType = longPressTypes.count == 1 && longPressTypes.first == .resize
-            let isNotMoveOrAddNewType = !longPressTypes.contains(.move) && !longPressTypes.contains(.addNew)
-            
-            longPress.minimumPressDuration = isOnlyResizeType && isNotMoveOrAddNewType ? 0.5 : 1.5
-            longPress.delegate = self
             collectionView.addGestureRecognizer(longPress)
         }
         if longPressTypes.contains(.pickView) {
-            let veryLongPress = UILongPressGestureRecognizer(
-                target: self,
-                action: #selector(handleVeryLongPress)
-            )
-            let isOnlyPickViewType = longPressTypes.count == 1 && longPressTypes.first == .pickView
-            let hasMoveOrAddNewType = longPressTypes.contains(.move) || longPressTypes.contains(.addNew)
-            let hasResizeType = longPressTypes.contains(.resize)
-            let minPressDuration: TimeInterval
-            if isOnlyPickViewType {
-                minPressDuration = 0.5
-            } else if hasMoveOrAddNewType && hasResizeType {
-                minPressDuration = 3
-            } else {
-                minPressDuration = 1.5
-            }
-            veryLongPress.minimumPressDuration = minPressDuration
-            veryLongPress.delegate = self
             collectionView.addGestureRecognizer(veryLongPress)
         }
     }
