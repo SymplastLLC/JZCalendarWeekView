@@ -54,12 +54,12 @@ class LongPressViewController: UIViewController {
         calendarWeekView.moveTimeMinInterval = calendarWeekView.zoom.value.division.rawValue
         calendarWeekView.parkingLotArea = CGRect(
             origin: CGPoint(
-                x: view.bounds.width - 60,
-                y: view.bounds.height - 60
+                x: view.bounds.width - 80,
+                y: view.bounds.height - 250
             ),
             size: CGSize(
-                width: 70,
-                height: 70
+                width: 60,
+                height: 250
             )
         )
     }

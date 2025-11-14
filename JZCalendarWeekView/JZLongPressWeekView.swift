@@ -1083,11 +1083,12 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                     x: pointInSelfView.x - pressPosition.xToViewLeft + currentEditingInfo.cellSize.width/2,
                     y: topYPoint + currentEditingInfo.cellSize.height/2
                 )
+                let pointRect = CGRect(origin: pointInSelfView, size: CGSize(width: 30, height: 30))
                 if parkingCornerView == nil,
                    let parkingLotIcon,
                    let shortPressView,
                    let parkingLotArea,
-                   parkingLotArea.intersects(shortPressView.frame) {
+                   parkingLotArea.intersects(pointRect) {
                     let parkingView = UIView(
                         frame: CGRect(
                             x: 5,
@@ -1107,12 +1108,12 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                     plImageView.contentMode = .scaleAspectFit
                     plImageView.frame = CGRect(x: 5, y: 5, width: 20, height: 20)
                     parkingView.addSubview(plImageView)
+                    parkingView.tintColor = .systemBlue
                     shortPressView.addSubview(parkingView)
                     parkingCornerView = parkingView
                 } else if parkingCornerView != nil,
-                          let shortPressView,
                           let parkingLotArea,
-                          !parkingLotArea.intersects(shortPressView.frame) {
+                          !parkingLotArea.intersects(pointRect) {
                     self.parkingCornerView?.removeFromSuperview()
                     self.parkingCornerView = nil
                 }
