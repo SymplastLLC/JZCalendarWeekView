@@ -6,7 +6,7 @@
 //  Copyright © 2018 Jeff Zhang. All rights reserved.
 //
 
-import UIKit
+import SwiftUI
 import JZCalendarWeekView
 
 class LongPressViewController: UIViewController {
@@ -62,6 +62,10 @@ class LongPressViewController: UIViewController {
                 height: 250
             )
         )
+        calendarWeekView.dragPreviewSize = CGSize(
+            width: 200,
+            height: 30
+        )
     }
 
     /// For example only
@@ -88,6 +92,10 @@ extension LongPressViewController: JZBaseViewDelegate {
 
 // LongPress core
 extension LongPressViewController: JZLongPressViewDelegate, JZLongPressViewDataSource {
+    func weekView(dropId: String, didEndDropInteractionAt startDate: Date, in column: Int) {
+        print(dropId, startDate, column)
+    }
+    
     func weekView(
         _ weekView: JZLongPressWeekView,
         event: JZBaseEvent,
@@ -151,13 +159,47 @@ extension LongPressViewController: JZLongPressViewDelegate, JZLongPressViewDataS
     }
 }
 
+@available(iOS 16.0, *)
+struct TestDraggingView: View {
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        Text("Hello, World!")
+            .font(.title)
+            .frame(height: 100)
+            .task {
+                try? await Task.sleep(nanoseconds: 3_000_000_000)
+                await MainActor.run {
+                    dismiss()
+                }
+            }
+            .draggable(UUID().uuidString) {
+                Text("Hello, World!")
+                    .font(.title)
+                    .frame(width: 200, height: 30)
+            }
+    }
+}
+
 // For example only
 extension LongPressViewController: OptionsViewDelegate {
+    
+    @objc private func presentDraggingVC() {
+        if #available(iOS 16.0, *) {
+            let vc = UIHostingController(rootView: TestDraggingView())
+            present(vc, animated: true, completion: nil)
+        }
+    }
 
     private func setupNaviBar() {
         updateNaviBarTitle()
+        let dragViewButton = UIButton(type: .system)
+        dragViewButton.setImage(UIImage(systemName: "hand.draw.fill"), for: .normal)
+        dragViewButton.addTarget(self, action: #selector(presentDraggingVC), for: .touchUpInside)
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: dragViewButton)
+        
         let optionsButton = UIButton(type: .system)
-        optionsButton.setImage(#imageLiteral(resourceName: "icon_options"), for: .normal)
+        optionsButton.setImage(UIImage(systemName: "gear"), for: .normal)
         optionsButton.frame.size = CGSize(width: 25, height: 25)
         if #available(iOS 11.0, *) {
             optionsButton.widthAnchor.constraint(equalToConstant: 25).isActive = true

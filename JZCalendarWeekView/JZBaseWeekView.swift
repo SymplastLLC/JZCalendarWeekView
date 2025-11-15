@@ -165,7 +165,6 @@ open class JZBaseWeekView: UIView {
         
         addSubview(collectionView)
         collectionView.setAnchorConstraintsFullSizeTo(view: self)
-
         registerViewClasses()
     }
 

@@ -9,6 +9,8 @@
 #if os(iOS)
 
 import UIKit
+import CoreTransferable
+import UniformTypeIdentifiers
 
 public protocol JZLongPressViewDelegate: AnyObject {
 
@@ -68,6 +70,12 @@ public protocol JZLongPressViewDelegate: AnyObject {
         didPickViewWith gesture: UILongPressGestureRecognizer,
         pressLocation: CGPoint,
         sourceView: UICollectionViewCell
+    )
+    
+    func weekView(
+        dropId: String,
+        didEndDropInteractionAt startDate: Date,
+        in column: Int
     )
 }
 
@@ -137,6 +145,11 @@ extension JZLongPressViewDelegate {
         didPickViewWith gesture: UILongPressGestureRecognizer,
         pressLocation: CGPoint,
         sourceView: UICollectionViewCell
+    ) {}
+    public func weekView(
+        dropId: String,
+        didEndDropInteractionAt startDate: Date,
+        in column: Int
     ) {}
 }
 
@@ -216,6 +229,7 @@ open class JZLongPressWeekView: JZBaseWeekView {
     /// Get this value when long press began and save the current relative X and Y value until it ended or cancelled
     private var pressPosition: (xToViewLeft: CGFloat, yToViewTop: CGFloat)?
 
+    public static var appIdentifier: String = "com.symplast.JZCalendar"
     public weak var longPressDelegate: JZLongPressViewDelegate?
     public weak var longPressDataSource: JZLongPressViewDataSource?
 
@@ -255,6 +269,8 @@ open class JZLongPressWeekView: JZBaseWeekView {
     /// The resizing cell contentView layer opacity (when you move the existing cell, the previous cell will be translucent)
     /// If your cell background alpha below this value, you should decrease this value as well
     public var resizingCellOpacity: Float = 0.3
+    
+    public var dragPreviewSize: CGSize = .zero
     
     /// The most top Y in the collectionView that you want longPress gesture enable.
     /// If you customise some decoration and supplementry views on top, **must** override this variable
@@ -313,10 +329,19 @@ open class JZLongPressWeekView: JZBaseWeekView {
 
     public override init(frame: CGRect) {
         super.init(frame: frame)
+        setupDropInteraction()
     }
 
     required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
+        setupDropInteraction()
+    }
+    
+    open func setupDropInteraction() {
+        if #available(iOS 14.0, *) {
+            let dropInteraction = UIDropInteraction(delegate: self)
+            collectionView.addInteraction(dropInteraction)
+        }
     }
 
     private func setupGestures() {
@@ -510,7 +535,7 @@ open class JZLongPressWeekView: JZBaseWeekView {
                 movingCell: selectedCell,
                 viewForMoveLongPressAt: startDate
             )
-            timeLabelWidth = max(selectedCell.bounds.width, textWidth)
+            timeLabelWidth = textWidth
         case .addNew:
             pressView = longPressDataSource.weekView(self, viewForAddNewLongPressAt: startDate)
             timeLabelWidth = min(widthInColumn, textWidth)
@@ -687,8 +712,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
 
         switch state {
         case .began:
-            let textWidth = UILabel.getLabelWidth(labelHeight, font: pressTimeLabel.font, text: "23:59 PM")
-            let timeLabelWidth = max(longPressView.bounds.width, textWidth)
+            let timeLabelWidth = UILabel.getLabelWidth(labelHeight, font: pressTimeLabel.font, text: "23:59 PM")
             pressTimeLabel.frame = CGRect(
                 x: longPressView.frame.origin.x,
                 y: longPressView.frame.origin.y - labelHeight,
@@ -763,8 +787,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         switch state {
         case .began:
             let labelHeight: CGFloat = 20
-            let textWidth = UILabel.getLabelWidth(labelHeight, font: pressTimeLabel.font, text: "23:59 PM")
-            let timeLabelWidth = max(longPressView.bounds.width, textWidth)
+            let timeLabelWidth = UILabel.getLabelWidth(labelHeight, font: pressTimeLabel.font, text: "23:59 PM")
             pressTimeLabel.frame = CGRect(
                 x: longPressView.frame.origin.x,
                 y: longPressView.frame.origin.y + longPressView.frame.height,
@@ -1093,8 +1116,8 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
             if let pressPosition {
                 let topYPoint = max(pointInSelfView.y - pressPosition.yToViewTop, longPressTopMarginY)
                 let shortPressX = pointInSelfView.x - pressPosition.xToViewLeft
-                let borderRightX = bounds.width - currentEditingInfo.cellSize.width
-                guard borderRightX > 0 && 0...borderRightX ~= shortPressX else { return }
+                let borderRightX = bounds.width - 10
+                guard borderRightX > 10 && 10...borderRightX ~= pointInSelfView.x else { return }
                 
                 shortPressView?.center = CGPoint(
                     x: shortPressX + currentEditingInfo.cellSize.width/2,
@@ -1151,19 +1174,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         case .ended where isAvailableForMoving:
             shortPressView?.removeFromSuperview()
             if let shortPressViewStartDate {
-                var column: Int = 1
-                if numOfResources > 1 {
-                    let originalWidth = widthInColumn
-                    for idx in 0..<numOfResources {
-                        let sectionX1 = CGFloat(idx) * originalWidth
-                        let sectionX2 = sectionX1 + originalWidth
-                        if sectionX1...sectionX2 ~= pointInSelfView.x {
-                            column = idx
-                            break
-                        }
-                    }
-                }
-                
+                let column = getCurrentColumn(pointInSelfView: pointInSelfView)
                 switch currentPressType {
                 case .addNew:
                     longPressDelegate?.weekView(
@@ -1210,6 +1221,22 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
             isScrolling = false
         }
     }
+    
+    private func getCurrentColumn(pointInSelfView: CGPoint) -> Int {
+        var column: Int = 1
+        if numOfResources > 1 {
+            let originalWidth = widthInColumn
+            for idx in 0..<numOfResources {
+                let sectionX1 = CGFloat(idx) * originalWidth
+                let sectionX2 = sectionX1 + originalWidth
+                if sectionX1...sectionX2 ~= pointInSelfView.x {
+                    column = idx
+                    break
+                }
+            }
+        }
+        return column
+    }
 
     /// used by handleShortPressGesture only
     private func getShortPressViewStartDate(pointInCollectionView: CGPoint, pointInSelfView: CGPoint) -> Date {
@@ -1229,6 +1256,72 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
             timeMinInterval: moveTimeMinInterval
         )
         return shortPressViewStartDate
+    }
+}
+
+// MARK: - UIDropInteractionDelegate
+@available(iOS 14.0, *)
+extension JZLongPressWeekView: UIDropInteractionDelegate {
+    public func dropInteraction(_ interaction: UIDropInteraction, canHandle session: UIDropSession) -> Bool {
+        session.canLoadObjects(ofClass: String.self) && longPressTypes.contains(.move)
+    }
+    
+    public func dropInteraction(_ interaction: UIDropInteraction, sessionDidUpdate session: UIDropSession) -> UIDropProposal {
+        let dropLocation = session.location(in: collectionView)
+        pressTimeLabel.frame.origin = CGPoint(
+            x: dropLocation.x - dragPreviewSize.width * 0.5,
+            y: dropLocation.y - (dragPreviewSize.height + pressTimeLabel.frame.height)
+        )
+        let pointInSelfView = session.location(in: self)
+        let dragDate = getShortPressViewStartDate(
+            pointInCollectionView: pressTimeLabel.frame.origin,
+            pointInSelfView: pointInSelfView
+        )
+        updateTimeLabelText(time: dragDate)
+        updateScroll(pointInSelfView: pointInSelfView)
+        return UIDropProposal(operation: .copy)
+    }
+    
+    public func dropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession) {
+        let pointInSelfView = session.location(in: self)
+        let dragDate = getShortPressViewStartDate(
+            pointInCollectionView: pressTimeLabel.frame.origin,
+            pointInSelfView: pointInSelfView
+        )
+        pressTimeLabel.removeFromSuperview()
+        _ = session.loadObjects(ofClass: String.self) { [weak self] items in
+            if let self, let dropId = items.first {
+                let column = getCurrentColumn(pointInSelfView: pointInSelfView)
+                DispatchQueue.main.async { [weak self] in
+                    self?.longPressDelegate?.weekView(
+                        dropId: dropId,
+                        didEndDropInteractionAt: dragDate,
+                        in: column
+                    )
+                }
+            }
+        }
+    }
+    
+    public func dropInteraction(_ interaction: UIDropInteraction, sessionDidEnter session: UIDropSession) {
+        let dropLocation = session.location(in: collectionView)
+        let labelHeight: CGFloat = 20
+        let timeLabelWidth = UILabel.getLabelWidth(labelHeight, font: pressTimeLabel.font, text: "23:59 PM")
+        pressTimeLabel.frame = CGRect(
+            x: dropLocation.x - dragPreviewSize.width * 0.5,
+            y: dropLocation.y - (dragPreviewSize.height + pressTimeLabel.frame.height),
+            width: timeLabelWidth,
+            height: labelHeight
+        )
+        collectionView.addSubview(pressTimeLabel)
+    }
+    
+    public func dropInteraction(_ interaction: UIDropInteraction, sessionDidEnd session: UIDropSession) {
+        pressTimeLabel.removeFromSuperview()
+    }
+    
+    public func dropInteraction(_ interaction: UIDropInteraction, sessionDidExit session: UIDropSession) {
+        pressTimeLabel.removeFromSuperview()
     }
 }
 
