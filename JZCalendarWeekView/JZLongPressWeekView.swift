@@ -208,6 +208,11 @@ open class JZLongPressWeekView: JZBaseWeekView {
         coverView.addGestureRecognizer(tap)
         return coverView
     }()
+    private lazy var coverViewForMoving: UIView = {
+        let coverView = UIView(frame: collectionView.bounds)
+        coverView.backgroundColor = .clear
+        return coverView
+    }()
     /// Get this value when long press began and save the current relative X and Y value until it ended or cancelled
     private var pressPosition: (xToViewLeft: CGFloat, yToViewTop: CGFloat)?
 
@@ -239,7 +244,7 @@ open class JZLongPressWeekView: JZBaseWeekView {
         label.backgroundColor = UIColor.black.withAlphaComponent(0.6)
         label.layer.cornerRadius = 5
         label.clipsToBounds = true
-        label.minimumScaleFactor = 0.8
+        label.minimumScaleFactor = 0.6
         label.adjustsFontSizeToFitWidth = true
         return label
     }()
@@ -360,10 +365,12 @@ open class JZLongPressWeekView: JZBaseWeekView {
     /// - The logic of vertical scroll is top scroll depending on **shortPressView top** to longPressTopMarginY, bottom scroll denpending on **finger point** to LongPressBottomMarginY.
     /// - The logic of horizontal scroll is left scroll depending on **finger point** to longPressLeftMarginY, bottom scroll denpending on **finger point** to LongPressRightMarginY.
     private func updateScroll(pointInSelfView: CGPoint) {
-        if isScrolling { return }
+        if isScrolling {
+            return
+        }
 
         // vertical
-        if let pressPosition, pointInSelfView.y - pressPosition.yToViewTop < longPressTopMarginY + 10 {
+        if pointInSelfView.y < longPressTopMarginY + 10 {
             isScrolling = true
             scrollingTo(direction: .up)
             return
@@ -413,10 +420,10 @@ open class JZLongPressWeekView: JZBaseWeekView {
             var contentOffsetX: CGFloat
             switch scrollType {
             case .sectionScroll:
-                let scrollSections: CGFloat = direction == .left ? -1 : 1
+                let scrollSections: CGFloat = direction == .left ? 1 : -1
                 contentOffsetX = currentOffset.x - flowLayout.sectionWidth! * scrollSections
             case .pageScroll:
-                contentOffsetX = direction == .left ? contentViewWidth * 2 : 0
+                contentOffsetX = direction == .left ? 0 : contentViewWidth * 2
             }
             // Take the horizontal scrollable edges into account
             let contentOffsetXWithScrollableEdges = min(max(contentOffsetX, scrollableEdges.leftX ?? -1), scrollableEdges.rightX ?? CGFloat.greatestFiniteMagnitude)
@@ -503,7 +510,7 @@ open class JZLongPressWeekView: JZBaseWeekView {
                 movingCell: selectedCell,
                 viewForMoveLongPressAt: startDate
             )
-            timeLabelWidth = min(selectedCell.bounds.width, textWidth)
+            timeLabelWidth = max(selectedCell.bounds.width, textWidth)
         case .addNew:
             pressView = longPressDataSource.weekView(self, viewForAddNewLongPressAt: startDate)
             timeLabelWidth = min(widthInColumn, textWidth)
@@ -642,6 +649,8 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     }
     
     private func resetDataForShortPress() {
+        coverViewForMoving.removeFromSuperview()
+        collectionView.isScrollEnabled = true
         pressTimeLabel.removeFromSuperview()
         isShortPressing = false
         if !isResizingPressRecognized {
@@ -679,7 +688,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         switch state {
         case .began:
             let textWidth = UILabel.getLabelWidth(labelHeight, font: pressTimeLabel.font, text: "23:59 PM")
-            let timeLabelWidth = min(longPressView.bounds.width, textWidth)
+            let timeLabelWidth = max(longPressView.bounds.width, textWidth)
             pressTimeLabel.frame = CGRect(
                 x: longPressView.frame.origin.x,
                 y: longPressView.frame.origin.y - labelHeight,
@@ -755,7 +764,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         case .began:
             let labelHeight: CGFloat = 20
             let textWidth = UILabel.getLabelWidth(labelHeight, font: pressTimeLabel.font, text: "23:59 PM")
-            let timeLabelWidth = min(longPressView.bounds.width, textWidth)
+            let timeLabelWidth = max(longPressView.bounds.width, textWidth)
             pressTimeLabel.frame = CGRect(
                 x: longPressView.frame.origin.x,
                 y: longPressView.frame.origin.y + longPressView.frame.height,
@@ -854,7 +863,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     }
 
     @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
-        guard !isPickViewPressRecognized else { return }
+        guard !isPickViewPressRecognized && currentPressType != .resize else { return }
         
         let state = gesture.state
         switch state {
@@ -1050,6 +1059,10 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
             )
             shortPressView?.frame.size = currentEditingInfo.cellSize
             shortPressView?.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)
+            
+            collectionView.addSubview(coverViewForMoving)
+            collectionView.isScrollEnabled = false
+            
             if let shortPressView {
                 addSubview(shortPressView)
             }
@@ -1079,8 +1092,12 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         case .changed where isAvailableForMoving:
             if let pressPosition {
                 let topYPoint = max(pointInSelfView.y - pressPosition.yToViewTop, longPressTopMarginY)
+                let shortPressX = pointInSelfView.x - pressPosition.xToViewLeft
+                let borderRightX = bounds.width - currentEditingInfo.cellSize.width
+                guard borderRightX > 0 && 0...borderRightX ~= shortPressX else { return }
+                
                 shortPressView?.center = CGPoint(
-                    x: pointInSelfView.x - pressPosition.xToViewLeft + currentEditingInfo.cellSize.width/2,
+                    x: shortPressX + currentEditingInfo.cellSize.width/2,
                     y: topYPoint + currentEditingInfo.cellSize.height/2
                 )
                 let pointRect = CGRect(origin: pointInSelfView, size: CGSize(width: 30, height: 30))
@@ -1097,18 +1114,18 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                             height: 30
                         )
                     )
-                    parkingView.backgroundColor = .white
+                    parkingView.backgroundColor = .systemBlue
                     parkingView.layer.cornerRadius = 15
                     let plImageView = UIImageView(
                         image: parkingLotIcon.withTintColor(
-                            .systemBlue,
+                            .white,
                             renderingMode: .alwaysTemplate
                         )
                     )
                     plImageView.contentMode = .scaleAspectFit
                     plImageView.frame = CGRect(x: 5, y: 5, width: 20, height: 20)
                     parkingView.addSubview(plImageView)
-                    parkingView.tintColor = .systemBlue
+                    parkingView.tintColor = .white
                     shortPressView.addSubview(parkingView)
                     parkingCornerView = parkingView
                 } else if parkingCornerView != nil,
@@ -1190,6 +1207,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
 
         if state == .ended || state == .cancelled {
             resetDataForShortPress()
+            isScrolling = false
         }
     }
 
