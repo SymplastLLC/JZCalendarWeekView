@@ -488,14 +488,14 @@ open class JZLongPressWeekView: JZBaseWeekView {
         let dotView = UIView(
             frame: CGRect(
                 origin: CGPoint(
-                    x: parent.frame.midX - 10,
-                    y: onUp ? parent.frame.origin.y - 5 : (parent.bounds.height + parent.frame.origin.y) - 15
+                    x: parent.frame.midX - 7.5,
+                    y: onUp ? parent.frame.origin.y - 5 : (parent.bounds.height + parent.frame.origin.y) - 10
                 ),
-                size: CGSize(width: 20, height: 20)
+                size: CGSize(width: 15, height: 15)
             )
         )
         dotView.backgroundColor = UIColor.white
-        dotView.layer.cornerRadius = 10
+        dotView.layer.cornerRadius = 7.5
         dotView.layer.borderWidth = 2
         dotView.layer.borderColor = UIColor.systemBlue.cgColor
         return dotView
@@ -674,6 +674,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     }
     
     private func resetDataForShortPress() {
+        currentPressType = .move
         coverViewForMoving.removeFromSuperview()
         collectionView.isScrollEnabled = true
         pressTimeLabel.removeFromSuperview()
@@ -887,7 +888,6 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
 
     @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
         guard !isPickViewPressRecognized && currentPressType != .resize else { return }
-        
         let state = gesture.state
         switch state {
         case .began:
@@ -968,7 +968,6 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     
     @objc private func handleVeryLongPress(_ gesture: UILongPressGestureRecognizer) {
         guard currentPressType != .addNew else { return }
-        
         isPickViewPressRecognized = true
         resetResizingMode()
         currentPressType = .pickView
@@ -1274,7 +1273,7 @@ extension JZLongPressWeekView: UIDropInteractionDelegate {
         )
         let pointInSelfView = session.location(in: self)
         let dragDate = getShortPressViewStartDate(
-            pointInCollectionView: pressTimeLabel.frame.origin,
+            pointInCollectionView: dropLocation,
             pointInSelfView: pointInSelfView
         )
         updateTimeLabelText(time: dragDate)
@@ -1283,9 +1282,10 @@ extension JZLongPressWeekView: UIDropInteractionDelegate {
     }
     
     public func dropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession) {
+        let dropLocation = session.location(in: collectionView)
         let pointInSelfView = session.location(in: self)
         let dragDate = getShortPressViewStartDate(
-            pointInCollectionView: pressTimeLabel.frame.origin,
+            pointInCollectionView: dropLocation,
             pointInSelfView: pointInSelfView
         )
         pressTimeLabel.removeFromSuperview()
