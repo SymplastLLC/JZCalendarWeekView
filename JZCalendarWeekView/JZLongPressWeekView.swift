@@ -682,7 +682,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         if !isResizingPressRecognized {
             pressPosition = nil
         }
-
+        currentEditingInfo.event = nil
         if currentPressType == .move {
             currentEditingInfo.allOpacityContentViews.forEach { $0.layer.opacity = 1 }
             currentEditingInfo.allOpacityContentViews.removeAll()
@@ -692,6 +692,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     private func resetDataForLongPress() {
         isResizingPressRecognized = false
         currentPressType = .move
+        currentEditingInfo.event = nil
         currentEditingInfo.allOpacityContentViews.forEach { $0.layer.opacity = 1 }
         currentEditingInfo.allOpacityContentViews.removeAll()
         coverViewForResizing.removeFromSuperview()
@@ -895,7 +896,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
             if let indexPath = collectionView.indexPathForItem(at: pointInCollectionView),
                let currentCell = collectionView.cellForItem(at: indexPath),
                let event = (currentCell as? JZLongPressEventCell)?.event,
-               event.isAvailableForResizing
+               event.isAvailableForResizing, !event.inParkingLot
             {
                 isResizingPressRecognized = true
                 resetDataForShortPress()
@@ -979,7 +980,8 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
             let pointInCollectionView = gesture.location(in: collectionView)
             if let indexPath = collectionView.indexPathForItem(at: pointInCollectionView),
                let currentCell = collectionView.cellForItem(at: indexPath),
-               let event = (currentCell as? JZLongPressEventCell)?.event {
+               let event = (currentCell as? JZLongPressEventCell)?.event,
+               !event.inParkingLot {
                 longPressDelegate?.weekView(
                     self,
                     event: event,
@@ -1036,7 +1038,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         var isAvailableForMoving: Bool {
             guard currentPressType == .move else { return true }
             let event = currentEditingInfo.event ?? (currentMovingCell as? JZLongPressEventCell)?.event
-            return event?.isAvailableForMoving ?? false
+            return (event?.isAvailableForMoving ?? false) && !(event?.inParkingLot ?? true)
         }
 
         // pressPosition is nil only when state equals began
