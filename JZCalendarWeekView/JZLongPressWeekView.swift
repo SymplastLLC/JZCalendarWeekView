@@ -326,21 +326,25 @@ open class JZLongPressWeekView: JZBaseWeekView {
         veryLongPress.delegate = self
         return veryLongPress
     }()
-    private var feedback = UISelectionFeedbackGenerator()
+    private var selectFeedback = UISelectionFeedbackGenerator()
+    private var parkingLotFeedback = UIImpactFeedbackGenerator()
 
     public override init(frame: CGRect) {
         super.init(frame: frame)
         setupDropInteraction()
-        if #available(iOS 17.5, *) {
-            feedback = UISelectionFeedbackGenerator(view: collectionView)
-        }
+        setupFeedback()
     }
 
     required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         setupDropInteraction()
+        setupFeedback()
+    }
+    
+    private func setupFeedback() {
         if #available(iOS 17.5, *) {
-            feedback = UISelectionFeedbackGenerator(view: collectionView)
+            selectFeedback = UISelectionFeedbackGenerator(view: collectionView)
+            parkingLotFeedback = UIImpactFeedbackGenerator(view: collectionView)
         }
     }
     
@@ -716,6 +720,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         let translationY = gesture.translation(in: longPressView.superview).y
         let pointInSelfView = gesture.location(in: self)
         let labelHeight: CGFloat = 20
+        let pointInCollectionView = gesture.location(in: collectionView)
 
         switch state {
         case .began:
@@ -760,8 +765,9 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
 
                 // Update cellSize for consistency
                 currentEditingInfo.cellSize.height = newHeight
-                let resizeDate = getDateForPoint(
-                    CGPoint(
+                let resizeDate = getPressViewStartDate(
+                    pointInCollectionView: pointInCollectionView,
+                    pointInSelfView: CGPoint(
                         x: longPressView.frame.origin.x,
                         y: longPressView.frame.origin.y - magicDragYOffset
                     )
@@ -790,6 +796,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         let state = gesture.state
         let translationY = gesture.translation(in: longPressView.superview).y
         let pointInSelfView = gesture.location(in: self)
+        let pointInCollectionView = gesture.location(in: collectionView)
         
         switch state {
         case .began:
@@ -835,8 +842,9 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 // Update cellSize for consistency
                 currentEditingInfo.cellSize.height = newHeight
                 let updatedMaxY = longPressView.frame.origin.y + newHeight
-                let resizeDate = getDateForPoint(
-                    CGPoint(
+                let resizeDate = getPressViewStartDate(
+                    pointInCollectionView: pointInCollectionView,
+                    pointInSelfView: CGPoint(
                         x: longPressView.frame.origin.x,
                         y: updatedMaxY - magicDragYOffset
                     )
@@ -958,7 +966,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 )
                 currentPressType = .resize
                 if #available(iOS 17.5, *) {
-                    feedback.selectionChanged(at: gesture.location(in: collectionView))
+                    selectFeedback.selectionChanged(at: gesture.location(in: collectionView))
                 }
                 longPressDelegate?.weekView(self, didStartResizing: event)
             }
@@ -1052,7 +1060,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
 
         // pressPosition is nil only when state equals began
         if pressPosition != nil {
-            shortPressViewStartDate = getShortPressViewStartDate(
+            shortPressViewStartDate = getPressViewStartDate(
                 pointInCollectionView: pointInCollectionView,
                 pointInSelfView: pointInSelfView
             )
@@ -1060,6 +1068,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         
         switch state {
         case .began:
+            parkingLotFeedback.prepare()
             switch currentPressType {
             case .addNew:
                 currentEditingInfo.cellSize = CGSize(
@@ -1080,7 +1089,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
             case .resize, .pickView:
                 break
             }
-            let longPressDate = getShortPressViewStartDate(
+            let longPressDate = getPressViewStartDate(
                 pointInCollectionView: pointInCollectionView,
                 pointInSelfView: pointInSelfView
             )
@@ -1114,7 +1123,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 }
             }
             if #available(iOS 17.5, *) {
-                feedback.selectionChanged(at: gesture.location(in: collectionView))
+                selectFeedback.selectionChanged(at: gesture.location(in: collectionView))
             }
             UIView.animate(
                 withDuration: 0.2,
@@ -1163,6 +1172,9 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                     parkingView.tintColor = .white
                     shortPressView.addSubview(parkingView)
                     parkingCornerView = parkingView
+                    if #available(iOS 17.5, *) {
+                        parkingLotFeedback.impactOccurred()
+                    }
                 } else if parkingCornerView != nil,
                           let parkingLotArea,
                           !parkingLotArea.intersects(pointRect) {
@@ -1187,13 +1199,17 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
             shortPressView?.removeFromSuperview()
             if let shortPressViewStartDate {
                 let column = getCurrentColumn(pointInSelfView: pointInSelfView)
+                let insideParkingLotArea = parkingCornerView != nil
+                if insideParkingLotArea {
+                    
+                }
                 switch currentPressType {
                 case .addNew:
                     longPressDelegate?.weekView(
                         self,
                         didEndAddNewLongPressAt: shortPressViewStartDate,
                         in: column,
-                        insideParkingLotArea: parkingCornerView != nil
+                        insideParkingLotArea: insideParkingLotArea
                     )
                 case .move:
                     if let currentEditEvent = currentEditingInfo.event, !Calendar.current.isDate(
@@ -1206,7 +1222,16 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                             editingEvent: currentEditEvent,
                             didEndMoveLongPressAt: shortPressViewStartDate,
                             in: column,
-                            insideParkingLotArea: parkingCornerView != nil
+                            insideParkingLotArea: insideParkingLotArea
+                        )
+                    } else if let currentEditEvent = currentEditingInfo.event,
+                              insideParkingLotArea {
+                        longPressDelegate?.weekView(
+                            self,
+                            editingEvent: currentEditEvent,
+                            didEndMoveLongPressAt: shortPressViewStartDate,
+                            in: column,
+                            insideParkingLotArea: insideParkingLotArea
                         )
                     }
                 case .resize, .pickView:
@@ -1252,7 +1277,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     }
 
     /// used by handleShortPressGesture only
-    private func getShortPressViewStartDate(pointInCollectionView: CGPoint, pointInSelfView: CGPoint) -> Date {
+    private func getPressViewStartDate(pointInCollectionView: CGPoint, pointInSelfView: CGPoint) -> Date {
         let shortPressViewTopDate = getDateForPoint(
             pointCollectionView: CGPoint(
                 x: pointInCollectionView.x,
@@ -1286,7 +1311,7 @@ extension JZLongPressWeekView: UIDropInteractionDelegate {
             y: dropLocation.y - (dragPreviewSize.height + pressTimeLabel.frame.height)
         )
         let pointInSelfView = session.location(in: self)
-        let dragDate = getShortPressViewStartDate(
+        let dragDate = getPressViewStartDate(
             pointInCollectionView: dropLocation,
             pointInSelfView: pointInSelfView
         )
@@ -1298,7 +1323,7 @@ extension JZLongPressWeekView: UIDropInteractionDelegate {
     public func dropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession) {
         let dropLocation = session.location(in: collectionView)
         let pointInSelfView = session.location(in: self)
-        let dragDate = getShortPressViewStartDate(
+        let dragDate = getPressViewStartDate(
             pointInCollectionView: dropLocation,
             pointInSelfView: pointInSelfView
         )
