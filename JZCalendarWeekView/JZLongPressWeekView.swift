@@ -682,7 +682,6 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         if !isResizingPressRecognized {
             pressPosition = nil
         }
-        currentEditingInfo.event = nil
         if currentPressType == .move {
             currentEditingInfo.allOpacityContentViews.forEach { $0.layer.opacity = 1 }
             currentEditingInfo.allOpacityContentViews.removeAll()
@@ -692,7 +691,6 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     private func resetDataForLongPress() {
         isResizingPressRecognized = false
         currentPressType = .move
-        currentEditingInfo.event = nil
         currentEditingInfo.allOpacityContentViews.forEach { $0.layer.opacity = 1 }
         currentEditingInfo.allOpacityContentViews.removeAll()
         coverViewForResizing.removeFromSuperview()
@@ -882,7 +880,6 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     
     public func resetResizingMode() {
         resetDataForLongPress()
-        currentEditingInfo.event = nil
         currentEditingInfo.cellSize = .zero
         currentEditingInfo.originalCellSize = .zero
     }
@@ -962,6 +959,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 didCancelLongPressAt: nil
             )
             resetDataForLongPress()
+            currentEditingInfo.event = nil
         default:
             break
         }
@@ -998,6 +996,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 longPressType: .pickView,
                 didCancelLongPressAt: nil
             )
+            currentEditingInfo.event = nil
         default:
             break
         }
@@ -1220,6 +1219,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         if state == .ended || state == .cancelled {
             resetDataForShortPress()
             isScrolling = false
+            currentEditingInfo.event = nil
         }
     }
     
