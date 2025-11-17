@@ -326,15 +326,22 @@ open class JZLongPressWeekView: JZBaseWeekView {
         veryLongPress.delegate = self
         return veryLongPress
     }()
+    private var feedback = UISelectionFeedbackGenerator()
 
     public override init(frame: CGRect) {
         super.init(frame: frame)
         setupDropInteraction()
+        if #available(iOS 17.5, *) {
+            feedback = UISelectionFeedbackGenerator(view: collectionView)
+        }
     }
 
     required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         setupDropInteraction()
+        if #available(iOS 17.5, *) {
+            feedback = UISelectionFeedbackGenerator(view: collectionView)
+        }
     }
     
     open func setupDropInteraction() {
@@ -950,6 +957,9 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                     }
                 )
                 currentPressType = .resize
+                if #available(iOS 17.5, *) {
+                    feedback.selectionChanged(at: gesture.location(in: collectionView))
+                }
                 longPressDelegate?.weekView(self, didStartResizing: event)
             }
         case .cancelled where isResizingPressRecognized:
@@ -1103,7 +1113,9 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                     currentEditingInfo.allOpacityContentViews.append($0.contentView)
                 }
             }
-
+            if #available(iOS 17.5, *) {
+                feedback.selectionChanged(at: gesture.location(in: collectionView))
+            }
             UIView.animate(
                 withDuration: 0.2,
                 delay: 0,
