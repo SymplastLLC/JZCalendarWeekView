@@ -764,10 +764,8 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 currentEditingInfo.cellSize.height = newHeight
                 let resizeDate = getPressViewStartDate(
                     pointInCollectionView: pointInCollectionView,
-                    pointInSelfView: CGPoint(
-                        x: longPressView.frame.origin.x,
-                        y: longPressView.frame.origin.y - magicDragYOffset
-                    )
+                    pointInSelfView: longPressView.frame.origin,
+                    correctPointInCollectionView: false
                 )
                 updateTimeLabelText(time: resizeDate)
                 pressTimeLabel.frame.origin = CGPoint(
@@ -843,8 +841,9 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                     pointInCollectionView: pointInCollectionView,
                     pointInSelfView: CGPoint(
                         x: longPressView.frame.origin.x,
-                        y: updatedMaxY - magicDragYOffset
-                    )
+                        y: updatedMaxY
+                    ),
+                    correctPointInCollectionView: false
                 )
                 updateTimeLabelText(time: resizeDate)
                 pressTimeLabel.frame.origin = CGPoint(
@@ -1075,7 +1074,8 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         if pressPosition != nil {
             shortPressViewStartDate = getPressViewStartDate(
                 pointInCollectionView: pointInCollectionView,
-                pointInSelfView: pointInSelfView
+                pointInSelfView: pointInSelfView,
+                correctPointInCollectionView: true
             )
         }
         
@@ -1104,7 +1104,8 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
             }
             let longPressDate = getPressViewStartDate(
                 pointInCollectionView: pointInCollectionView,
-                pointInSelfView: pointInSelfView
+                pointInSelfView: pointInSelfView,
+                correctPointInCollectionView: true
             )
             shortPressViewStartDate = longPressDate
             shortPressView = initShortPressView(
@@ -1290,11 +1291,19 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     }
 
     /// used by handleShortPressGesture only
-    private func getPressViewStartDate(pointInCollectionView: CGPoint, pointInSelfView: CGPoint) -> Date {
+    private func getPressViewStartDate(
+        pointInCollectionView: CGPoint,
+        pointInSelfView: CGPoint,
+        correctPointInCollectionView: Bool
+    ) -> Date {
+        var collectionViewY = pointInCollectionView.y
+        if correctPointInCollectionView {
+            collectionViewY -= (pressPosition?.yToViewTop ?? 0) - magicDragYOffset
+        }
         let shortPressViewTopDate = getDateForPoint(
             pointCollectionView: CGPoint(
                 x: pointInCollectionView.x,
-                y: pointInCollectionView.y - (pressPosition?.yToViewTop ?? 0) - magicDragYOffset
+                y: collectionViewY
             ),
             pointSelfView: pointInSelfView
         )
@@ -1326,7 +1335,8 @@ extension JZLongPressWeekView: UIDropInteractionDelegate {
         let pointInSelfView = session.location(in: self)
         let dragDate = getPressViewStartDate(
             pointInCollectionView: dropLocation,
-            pointInSelfView: pointInSelfView
+            pointInSelfView: pointInSelfView,
+            correctPointInCollectionView: false
         )
         updateTimeLabelText(time: dragDate)
         updateScroll(pointInSelfView: pointInSelfView)
@@ -1338,7 +1348,8 @@ extension JZLongPressWeekView: UIDropInteractionDelegate {
         let pointInSelfView = session.location(in: self)
         let dragDate = getPressViewStartDate(
             pointInCollectionView: dropLocation,
-            pointInSelfView: pointInSelfView
+            pointInSelfView: pointInSelfView,
+            correctPointInCollectionView: false
         )
         pressTimeLabel.removeFromSuperview()
         _ = session.loadObjects(ofClass: String.self) { [weak self] items in
