@@ -94,6 +94,14 @@ extension LongPressViewController: JZBaseViewDelegate {
 extension LongPressViewController: JZLongPressViewDelegate, JZLongPressViewDataSource {
     func weekView(
         _ weekView: JZLongPressWeekView,
+        longPressType: JZLongPressWeekView.LongPressType,
+        didCancelLongPressAt startDate: Date?
+    ) {
+        print(longPressType, startDate?.description ?? "-")
+    }
+    
+    func weekView(
+        _ weekView: JZLongPressWeekView,
         resizingEvent: JZBaseEvent,
         didEndResizingAt startDate: Date,
         endDate: Date

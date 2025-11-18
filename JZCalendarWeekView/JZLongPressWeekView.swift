@@ -203,6 +203,7 @@ open class JZLongPressWeekView: JZBaseWeekView {
         var originalCellSize: CGSize = .zero
         /// Save current all changed opacity cell contentViews to change them back when end or cancel longPress, have to save them because of cell reusage
         var allOpacityContentViews = [UIView]()
+        var allHiddenContentViews = [UIView]()
     }
     /// When moving the longPress view, if it causes the collectionView scrolling
     private var isScrolling: Bool = false
@@ -265,10 +266,6 @@ open class JZLongPressWeekView: JZBaseWeekView {
     /// The moving cell contentView layer opacity (when you move the existing cell, the previous cell will be translucent)
     /// If your cell background alpha below this value, you should decrease this value as well
     public var movingCellOpacity: Float = 0.6
-    
-    /// The resizing cell contentView layer opacity (when you move the existing cell, the previous cell will be translucent)
-    /// If your cell background alpha below this value, you should decrease this value as well
-    public var resizingCellOpacity: Float = 0.3
     
     public var dragPreviewSize: CGSize = .zero
     
@@ -702,8 +699,8 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     private func resetDataForLongPress() {
         isResizingPressRecognized = false
         currentPressType = .move
-        currentEditingInfo.allOpacityContentViews.forEach { $0.layer.opacity = 1 }
-        currentEditingInfo.allOpacityContentViews.removeAll()
+        currentEditingInfo.allHiddenContentViews.forEach { $0.isHidden = false }
+        currentEditingInfo.allHiddenContentViews.removeAll()
         coverViewForResizing.removeFromSuperview()
         collectionView.isScrollEnabled = true
         longPressView?.removeFromSuperview()
@@ -889,6 +886,12 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 didEndResizingAt: startDate,
                 endDate: endDate
             )
+        } else {
+            longPressDelegate?.weekView(
+                self,
+                longPressType: .resize,
+                didCancelLongPressAt: nil
+            )
         }
         resetResizingMode()
     }
@@ -900,7 +903,10 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     }
 
     @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
-        guard !isPickViewPressRecognized && currentPressType != .resize else { return }
+        guard !isResizingPressRecognized
+                && !isPickViewPressRecognized
+                && currentPressType != .resize else { return }
+        
         let state = gesture.state
         switch state {
         case .began:
@@ -950,8 +956,8 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 currentEditingInfo.originalCellSize = currentCell.frame.size
                 currentEditingInfo.event = event
                 getCurrentEditingCells().forEach {
-                    $0.contentView.layer.opacity = resizingCellOpacity
-                    currentEditingInfo.allOpacityContentViews.append($0.contentView)
+                    $0.contentView.isHidden = true
+                    currentEditingInfo.allHiddenContentViews.append($0.contentView)
                 }
                 
                 UIView.animate(
@@ -986,7 +992,14 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     @objc private func handleVeryLongPress(_ gesture: UILongPressGestureRecognizer) {
         guard currentPressType != .addNew else { return }
         isPickViewPressRecognized = true
-        resetResizingMode()
+        if isResizingPressRecognized {
+            longPressDelegate?.weekView(
+                self,
+                longPressType: .resize,
+                didCancelLongPressAt: nil
+            )
+            resetResizingMode()
+        }
         currentPressType = .pickView
         
         let state = gesture.state
