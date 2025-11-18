@@ -765,7 +765,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 let resizeDate = getPressViewStartDate(
                     pointInCollectionView: pointInCollectionView,
                     pointInSelfView: longPressView.frame.origin,
-                    correctPointInCollectionView: false
+                    correctPointInCollectionView: true
                 )
                 updateTimeLabelText(time: resizeDate)
                 pressTimeLabel.frame.origin = CGPoint(
@@ -843,7 +843,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                         x: longPressView.frame.origin.x,
                         y: updatedMaxY
                     ),
-                    correctPointInCollectionView: false
+                    correctPointInCollectionView: true
                 )
                 updateTimeLabelText(time: resizeDate)
                 pressTimeLabel.frame.origin = CGPoint(
@@ -1336,7 +1336,7 @@ extension JZLongPressWeekView: UIDropInteractionDelegate {
         let dragDate = getPressViewStartDate(
             pointInCollectionView: dropLocation,
             pointInSelfView: pointInSelfView,
-            correctPointInCollectionView: false
+            correctPointInCollectionView: true
         )
         updateTimeLabelText(time: dragDate)
         updateScroll(pointInSelfView: pointInSelfView)
@@ -1349,7 +1349,7 @@ extension JZLongPressWeekView: UIDropInteractionDelegate {
         let dragDate = getPressViewStartDate(
             pointInCollectionView: dropLocation,
             pointInSelfView: pointInSelfView,
-            correctPointInCollectionView: false
+            correctPointInCollectionView: true
         )
         pressTimeLabel.removeFromSuperview()
         _ = session.loadObjects(ofClass: String.self) { [weak self] items in
