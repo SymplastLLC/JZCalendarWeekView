@@ -66,6 +66,7 @@ class LongPressViewController: UIViewController {
             width: 200,
             height: 30
         )
+        calendarWeekView.magicResizeYOffset = UIDevice.current.userInterfaceIdiom == .phone ? -10 : -5
     }
 
     /// For example only

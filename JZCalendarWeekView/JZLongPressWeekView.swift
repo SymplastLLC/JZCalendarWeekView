@@ -246,6 +246,7 @@ open class JZLongPressWeekView: JZBaseWeekView {
     public var addNewDurationMins: Int = 120
     /// Magic value to calculate date correctly
     public var magicDragYOffset: CGFloat = 0
+    public var magicResizeYOffset: CGFloat = 0
     /// Minimum height for resized events as a fraction of hour height (default: 0.5 = 30 mins)
     public var minResizeHeightFraction: CGFloat = 0.3
     /// Parking lot area to handle drag & drop inside
@@ -687,9 +688,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         collectionView.isScrollEnabled = true
         pressTimeLabel.removeFromSuperview()
         isShortPressing = false
-        if !isResizingPressRecognized {
-            pressPosition = nil
-        }
+        pressPosition = nil
         if currentPressType == .move {
             currentEditingInfo.allOpacityContentViews.forEach { $0.layer.opacity = 1 }
             currentEditingInfo.allOpacityContentViews.removeAll()
@@ -765,7 +764,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 let resizeDate = getPressViewStartDate(
                     pointInCollectionView: pointInCollectionView,
                     pointInSelfView: longPressView.frame.origin,
-                    correctPointInCollectionView: true
+                    magicYOffset: magicResizeYOffset
                 )
                 updateTimeLabelText(time: resizeDate)
                 pressTimeLabel.frame.origin = CGPoint(
@@ -843,7 +842,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                         x: longPressView.frame.origin.x,
                         y: updatedMaxY
                     ),
-                    correctPointInCollectionView: true
+                    magicYOffset: magicResizeYOffset
                 )
                 updateTimeLabelText(time: resizeDate)
                 pressTimeLabel.frame.origin = CGPoint(
@@ -1075,7 +1074,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
             shortPressViewStartDate = getPressViewStartDate(
                 pointInCollectionView: pointInCollectionView,
                 pointInSelfView: pointInSelfView,
-                correctPointInCollectionView: true
+                magicYOffset: magicDragYOffset
             )
         }
         
@@ -1105,7 +1104,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
             let longPressDate = getPressViewStartDate(
                 pointInCollectionView: pointInCollectionView,
                 pointInSelfView: pointInSelfView,
-                correctPointInCollectionView: true
+                magicYOffset: magicDragYOffset
             )
             shortPressViewStartDate = longPressDate
             shortPressView = initShortPressView(
@@ -1294,11 +1293,11 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     private func getPressViewStartDate(
         pointInCollectionView: CGPoint,
         pointInSelfView: CGPoint,
-        correctPointInCollectionView: Bool
+        magicYOffset: CGFloat? = nil
     ) -> Date {
         var collectionViewY = pointInCollectionView.y
-        if correctPointInCollectionView {
-            collectionViewY -= (pressPosition?.yToViewTop ?? 0) - magicDragYOffset
+        if let magicYOffset {
+            collectionViewY -= (pressPosition?.yToViewTop ?? 0) - magicYOffset
         }
         let shortPressViewTopDate = getDateForPoint(
             pointCollectionView: CGPoint(
@@ -1336,7 +1335,7 @@ extension JZLongPressWeekView: UIDropInteractionDelegate {
         let dragDate = getPressViewStartDate(
             pointInCollectionView: dropLocation,
             pointInSelfView: pointInSelfView,
-            correctPointInCollectionView: true
+            magicYOffset: magicDragYOffset
         )
         updateTimeLabelText(time: dragDate)
         updateScroll(pointInSelfView: pointInSelfView)
@@ -1349,7 +1348,7 @@ extension JZLongPressWeekView: UIDropInteractionDelegate {
         let dragDate = getPressViewStartDate(
             pointInCollectionView: dropLocation,
             pointInSelfView: pointInSelfView,
-            correctPointInCollectionView: true
+            magicYOffset: magicDragYOffset
         )
         pressTimeLabel.removeFromSuperview()
         _ = session.loadObjects(ofClass: String.self) { [weak self] items in
