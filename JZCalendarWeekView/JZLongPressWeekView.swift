@@ -247,6 +247,7 @@ open class JZLongPressWeekView: JZBaseWeekView {
     /// Magic value to calculate date correctly
     public var magicDragYOffset: CGFloat = 0
     public var magicResizeYOffset: CGFloat = 0
+    public var magicDropYOffset: CGFloat = 0
     /// Minimum height for resized events as a fraction of hour height (default: 0.5 = 30 mins)
     public var minResizeHeightFraction: CGFloat = 0.3
     /// Parking lot area to handle drag & drop inside
@@ -1335,7 +1336,7 @@ extension JZLongPressWeekView: UIDropInteractionDelegate {
         let dragDate = getPressViewStartDate(
             pointInCollectionView: dropLocation,
             pointInSelfView: pointInSelfView,
-            magicYOffset: magicDragYOffset
+            magicYOffset: magicDropYOffset
         )
         updateTimeLabelText(time: dragDate)
         updateScroll(pointInSelfView: pointInSelfView)
@@ -1348,7 +1349,7 @@ extension JZLongPressWeekView: UIDropInteractionDelegate {
         let dragDate = getPressViewStartDate(
             pointInCollectionView: dropLocation,
             pointInSelfView: pointInSelfView,
-            magicYOffset: magicDragYOffset
+            magicYOffset: magicDropYOffset
         )
         pressTimeLabel.removeFromSuperview()
         _ = session.loadObjects(ofClass: String.self) { [weak self] items in
