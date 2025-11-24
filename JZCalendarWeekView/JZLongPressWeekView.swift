@@ -1226,11 +1226,13 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                         insideParkingLotArea: insideParkingLotArea
                     )
                 case .move:
-                    if let currentEditEvent = currentEditingInfo.event, !Calendar.current.isDate(
+                    if let currentEditEvent = currentEditingInfo.event,
+                       (!Calendar.current.isDate(
                         currentEditEvent.startDate,
                         equalTo: shortPressViewStartDate,
                         toGranularity: .minute
-                    ) {
+                       ) || column != currentEditEvent.resourceIndex)
+                    {
                         longPressDelegate?.weekView(
                             self,
                             editingEvent: currentEditEvent,
@@ -1275,7 +1277,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     }
     
     private func getCurrentColumn(pointInSelfView: CGPoint) -> Int {
-        var column: Int = 1
+        var column: Int = 0
         if numOfResources > 1 {
             let originalWidth = widthInColumn
             for idx in 0..<numOfResources {
