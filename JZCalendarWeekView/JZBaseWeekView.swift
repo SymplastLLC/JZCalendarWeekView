@@ -566,7 +566,7 @@ open class JZBaseWeekView: UIView {
      */
     open func getDateForPointY(_ yCollectionView: CGFloat) -> (hour: Int, minute: Int) {
         // ColumnHeader and AllDayHeader(vertical UICollectionReusableView) should be considered in gesture point
-        var adjustedY = yCollectionView - flowLayout.columnHeaderHeight - flowLayout.contentsMargin.top - flowLayout.allDayHeaderHeight
+        var adjustedY = yCollectionView - flowLayout.columnHeaderHeight - flowLayout.contentsMargin.top - flowLayout.allDayHeaderHeight - flowLayout.topHeaderHeight
         let minY: CGFloat = 0
         // contentSize includes all reusableView, margin and scrollable area
         let maxY = collectionView.contentSize.height - flowLayout.contentsMargin.top - flowLayout.contentsMargin.bottom - flowLayout.allDayHeaderHeight - flowLayout.columnHeaderHeight - flowLayout.topHeaderHeight + flowLayout.timeRangeLowerOffset

@@ -204,6 +204,8 @@ open class JZLongPressWeekView: JZBaseWeekView {
         /// Save current all changed opacity cell contentViews to change them back when end or cancel longPress, have to save them because of cell reusage
         var allOpacityContentViews = [UIView]()
         var allHiddenContentViews = [UIView]()
+        var resizeStartDate: Date?
+        var resizeEndDate: Date?
     }
     /// When moving the longPress view, if it causes the collectionView scrolling
     private var isScrolling: Bool = false
@@ -730,10 +732,6 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 height: labelHeight
             )
             collectionView.addSubview(pressTimeLabel)
-            pressPosition = (
-                pointInCollectionView.x - pressTimeLabel.frame.origin.x,
-                pointInCollectionView.y - pressTimeLabel.frame.origin.y
-            )
         case .changed:
             // Calculate new top position using translation (smoother than direct positioning)
             let originalTopY = longPressView.frame.origin.y
@@ -767,16 +765,20 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
 
                 // Update cellSize for consistency
                 currentEditingInfo.cellSize.height = newHeight
+                let updatedMinY = newTopY - labelHeight
                 let resizeDate = getPressViewStartDate(
                     pointInCollectionView: pointInCollectionView,
-                    pointInSelfView: longPressView.frame.origin,
-                    magicYOffset: magicResizeYOffset,
-                    pressPositionYToViewTop: pressPosition?.yToViewTop
+                    pointInSelfView: CGPoint(
+                        x: longPressView.frame.origin.x,
+                        y: newTopY
+                    ),
+                    magicYOffset: magicResizeYOffset
                 )
+                currentEditingInfo.resizeStartDate = resizeDate
                 updateTimeLabelText(time: resizeDate)
                 pressTimeLabel.frame.origin = CGPoint(
                     x: longPressView.frame.origin.x,
-                    y: newTopY - labelHeight
+                    y: updatedMinY
                 )
                 updateScroll(pointInSelfView: pointInSelfView)
                 // Reset translation for next iteration (smooth continuous dragging)
@@ -810,10 +812,6 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 height: labelHeight
             )
             collectionView.addSubview(pressTimeLabel)
-            pressPosition = (
-                pointInCollectionView.x - pressTimeLabel.frame.origin.x,
-                pointInCollectionView.y - pressTimeLabel.frame.origin.y
-            )
         case .changed:
             // Calculate new bottom position using translation (smoother than direct positioning)
             let originalBottomY = longPressView.frame.maxY
@@ -853,9 +851,9 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                         x: longPressView.frame.origin.x,
                         y: updatedMaxY
                     ),
-                    magicYOffset: magicResizeYOffset,
-                    pressPositionYToViewTop: pressPosition?.yToViewTop
+                    magicYOffset: magicResizeYOffset
                 )
+                currentEditingInfo.resizeEndDate = resizeDate
                 updateTimeLabelText(time: resizeDate)
                 pressTimeLabel.frame.origin = CGPoint(
                     x: longPressView.frame.origin.x,
@@ -877,19 +875,9 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     @objc private func endResizingModeTap(_ gesture: UIGestureRecognizer) {
         if let longPressView,
            let event = currentEditingInfo.event,
-           longPressView.frame.height != currentEditingInfo.originalCellSize.height {
-            let startDate = getDateForPoint(
-                CGPoint(
-                    x: longPressView.frame.origin.x,
-                    y: longPressView.frame.origin.y - magicDragYOffset
-                )
-            )
-            let endDate = getDateForPoint(
-                CGPoint(
-                    x: longPressView.frame.origin.x,
-                    y: longPressView.frame.origin.y + longPressView.frame.height - magicDragYOffset
-                )
-            )
+           longPressView.frame.height != currentEditingInfo.originalCellSize.height,
+           let startDate = currentEditingInfo.resizeStartDate,
+           let endDate = currentEditingInfo.resizeEndDate {
             longPressDelegate?.weekView(
                 self,
                 resizingEvent: event,
@@ -908,6 +896,8 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     
     public func resetResizingMode() {
         resetDataForLongPress()
+        currentEditingInfo.resizeStartDate = nil
+        currentEditingInfo.resizeEndDate = nil
         currentEditingInfo.cellSize = .zero
         currentEditingInfo.originalCellSize = .zero
     }
@@ -938,6 +928,24 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 longPressView?.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)
                 if let longPressView {
                     collectionView.addSubview(longPressView)
+                    let resizeStartDate = getPressViewStartDate(
+                        pointInCollectionView: pointInCollectionView,
+                        pointInSelfView: longPressView.frame.origin,
+                        magicYOffset: magicResizeYOffset,
+                        pressPositionYToViewTop: pointInCollectionView.y - longPressView.frame.origin.y
+                    )
+                    currentEditingInfo.resizeStartDate = resizeStartDate
+                    
+                    let resizeEndDate = getPressViewStartDate(
+                        pointInCollectionView: pointInCollectionView,
+                        pointInSelfView: CGPoint(
+                            x: longPressView.frame.origin.x,
+                            y: longPressView.frame.origin.y + longPressView.frame.height
+                        ),
+                        magicYOffset: magicResizeYOffset,
+                        pressPositionYToViewTop: pointInCollectionView.y - longPressView.frame.origin.y + longPressView.frame.height
+                    )
+                    currentEditingInfo.resizeEndDate = resizeEndDate
                 }
                 
                 let panDownDotGesture = UIPanGestureRecognizer(
