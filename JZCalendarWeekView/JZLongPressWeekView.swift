@@ -708,6 +708,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         downDotView?.removeFromSuperview()
         upDotView = nil
         downDotView = nil
+        pressPosition = nil
     }
     
     @objc private func handleUpDotPanGesture(_ gesture: UIPanGestureRecognizer) {
@@ -729,6 +730,10 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 height: labelHeight
             )
             collectionView.addSubview(pressTimeLabel)
+            pressPosition = (
+                pointInCollectionView.x - pressTimeLabel.frame.origin.x,
+                pointInCollectionView.y - pressTimeLabel.frame.origin.y
+            )
         case .changed:
             // Calculate new top position using translation (smoother than direct positioning)
             let originalTopY = longPressView.frame.origin.y
@@ -765,7 +770,8 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 let resizeDate = getPressViewStartDate(
                     pointInCollectionView: pointInCollectionView,
                     pointInSelfView: longPressView.frame.origin,
-                    magicYOffset: magicResizeYOffset
+                    magicYOffset: magicResizeYOffset,
+                    pressPositionYToViewTop: pressPosition?.yToViewTop
                 )
                 updateTimeLabelText(time: resizeDate)
                 pressTimeLabel.frame.origin = CGPoint(
@@ -804,6 +810,10 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 height: labelHeight
             )
             collectionView.addSubview(pressTimeLabel)
+            pressPosition = (
+                pointInCollectionView.x - pressTimeLabel.frame.origin.x,
+                pointInCollectionView.y - pressTimeLabel.frame.origin.y
+            )
         case .changed:
             // Calculate new bottom position using translation (smoother than direct positioning)
             let originalBottomY = longPressView.frame.maxY
@@ -843,7 +853,8 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                         x: longPressView.frame.origin.x,
                         y: updatedMaxY
                     ),
-                    magicYOffset: magicResizeYOffset
+                    magicYOffset: magicResizeYOffset,
+                    pressPositionYToViewTop: pressPosition?.yToViewTop
                 )
                 updateTimeLabelText(time: resizeDate)
                 pressTimeLabel.frame.origin = CGPoint(
@@ -1075,7 +1086,8 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
             shortPressViewStartDate = getPressViewStartDate(
                 pointInCollectionView: pointInCollectionView,
                 pointInSelfView: pointInSelfView,
-                magicYOffset: magicDragYOffset
+                magicYOffset: magicDragYOffset,
+                pressPositionYToViewTop: pressPosition?.yToViewTop
             )
         }
         
@@ -1105,7 +1117,8 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
             let longPressDate = getPressViewStartDate(
                 pointInCollectionView: pointInCollectionView,
                 pointInSelfView: pointInSelfView,
-                magicYOffset: magicDragYOffset
+                magicYOffset: magicDragYOffset,
+                pressPositionYToViewTop: pressPosition?.yToViewTop
             )
             shortPressViewStartDate = longPressDate
             shortPressView = initShortPressView(
@@ -1265,7 +1278,10 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         }
         
         if (state == .began || state == .changed), let shortPressViewStartDate {
-            updateTimeLabel(time: shortPressViewStartDate, pointInSelfView: pointInSelfView)
+            updateTimeLabel(
+                time: shortPressViewStartDate,
+                pointInSelfView: pointInSelfView
+            )
             updateScroll(pointInSelfView: pointInSelfView)
         }
 
@@ -1296,11 +1312,15 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     private func getPressViewStartDate(
         pointInCollectionView: CGPoint,
         pointInSelfView: CGPoint,
-        magicYOffset: CGFloat? = nil
+        magicYOffset: CGFloat? = nil,
+        pressPositionYToViewTop: CGFloat? = nil
     ) -> Date {
         var collectionViewY = pointInCollectionView.y
         if let magicYOffset {
-            collectionViewY -= (pressPosition?.yToViewTop ?? 0) - magicYOffset
+            collectionViewY -= magicYOffset
+        }
+        if let pressPositionYToViewTop {
+            collectionViewY -= pressPositionYToViewTop
         }
         let shortPressViewTopDate = getDateForPoint(
             pointCollectionView: CGPoint(
