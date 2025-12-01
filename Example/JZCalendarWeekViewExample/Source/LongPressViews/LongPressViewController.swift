@@ -104,9 +104,9 @@ extension LongPressViewController: JZLongPressViewDelegate, JZLongPressViewDataS
         _ weekView: JZLongPressWeekView,
         resizingEvent: JZBaseEvent,
         didEndResizingAt startDate: Date,
-        endDate: Date
+        endDate: Date?
     ) {
-        print(resizingEvent, startDate, endDate)
+        print(resizingEvent, startDate, endDate?.description ?? "")
     }
     
     func weekView(dropId: String, didEndDropInteractionAt startDate: Date, in column: Int) {

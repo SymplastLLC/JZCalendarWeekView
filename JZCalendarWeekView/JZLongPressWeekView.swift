@@ -61,7 +61,7 @@ public protocol JZLongPressViewDelegate: AnyObject {
         _ weekView: JZLongPressWeekView,
         resizingEvent: JZBaseEvent,
         didEndResizingAt startDate: Date,
-        endDate: Date
+        endDate: Date?
     )
     
     func weekView(
@@ -137,7 +137,7 @@ extension JZLongPressViewDelegate {
         _ weekView: JZLongPressWeekView,
         resizingEvent: JZBaseEvent,
         didEndResizingAt startDate: Date,
-        endDate: Date
+        endDate: Date?
     ) {}
     public func weekView(
         _ weekView: JZLongPressWeekView,
@@ -564,6 +564,7 @@ open class JZLongPressWeekView: JZBaseWeekView {
     /// Overload for base class with left and right margin check for LongPress
     open func getDateForPointX(xCollectionView: CGFloat, xSelfView: CGFloat) -> Date {
         let date = getDateForPointX(xCollectionView)
+        guard !isResizingPressRecognized else { return date }
         // when isScrolling equals true, means it will scroll to previous date
         if xSelfView < longPressLeftMarginX && isScrolling == false {
             // should add one date to put the view inside current page
@@ -769,7 +770,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 let resizeDate = getPressViewStartDate(
                     pointInCollectionView: pointInCollectionView,
                     pointInSelfView: CGPoint(
-                        x: longPressView.frame.origin.x,
+                        x: longPressView.frame.midX,
                         y: newTopY
                     ),
                     magicYOffset: magicResizeYOffset
@@ -848,7 +849,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 let resizeDate = getPressViewStartDate(
                     pointInCollectionView: pointInCollectionView,
                     pointInSelfView: CGPoint(
-                        x: longPressView.frame.origin.x,
+                        x: longPressView.frame.midX,
                         y: updatedMaxY
                     ),
                     magicYOffset: magicResizeYOffset
@@ -876,13 +877,12 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         if let longPressView,
            let event = currentEditingInfo.event,
            longPressView.frame.height != currentEditingInfo.originalCellSize.height,
-           let startDate = currentEditingInfo.resizeStartDate,
-           let endDate = currentEditingInfo.resizeEndDate {
+           let startDate = currentEditingInfo.resizeStartDate {
             longPressDelegate?.weekView(
                 self,
                 resizingEvent: event,
                 didEndResizingAt: startDate,
-                endDate: endDate
+                endDate: currentEditingInfo.resizeEndDate
             )
         } else {
             longPressDelegate?.weekView(
@@ -928,24 +928,6 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 longPressView?.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)
                 if let longPressView {
                     collectionView.addSubview(longPressView)
-                    let resizeStartDate = getPressViewStartDate(
-                        pointInCollectionView: pointInCollectionView,
-                        pointInSelfView: longPressView.frame.origin,
-                        magicYOffset: magicResizeYOffset,
-                        pressPositionYToViewTop: pointInCollectionView.y - longPressView.frame.origin.y
-                    )
-                    currentEditingInfo.resizeStartDate = resizeStartDate
-                    
-                    let resizeEndDate = getPressViewStartDate(
-                        pointInCollectionView: pointInCollectionView,
-                        pointInSelfView: CGPoint(
-                            x: longPressView.frame.origin.x,
-                            y: longPressView.frame.origin.y + longPressView.frame.height
-                        ),
-                        magicYOffset: magicResizeYOffset,
-                        pressPositionYToViewTop: pointInCollectionView.y - longPressView.frame.origin.y + longPressView.frame.height
-                    )
-                    currentEditingInfo.resizeEndDate = resizeEndDate
                 }
                 
                 let panDownDotGesture = UIPanGestureRecognizer(
@@ -970,6 +952,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 upDotView = upDot
                 downDotView = downDot
                 
+                currentEditingInfo.resizeStartDate = event.startDate
                 currentEditingInfo.cellSize = currentCell.frame.size
                 currentEditingInfo.originalCellSize = currentCell.frame.size
                 currentEditingInfo.event = event
@@ -1235,9 +1218,6 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
             if let shortPressViewStartDate {
                 let column = getCurrentColumn(pointInSelfView: pointInSelfView)
                 let insideParkingLotArea = parkingCornerView != nil
-                if insideParkingLotArea {
-                    
-                }
                 switch currentPressType {
                 case .addNew:
                     longPressDelegate?.weekView(
