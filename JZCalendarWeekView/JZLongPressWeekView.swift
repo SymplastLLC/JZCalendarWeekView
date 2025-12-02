@@ -953,6 +953,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 downDotView = downDot
                 
                 currentEditingInfo.resizeStartDate = event.startDate
+                currentEditingInfo.resizeEndDate = event.endDate
                 currentEditingInfo.cellSize = currentCell.frame.size
                 currentEditingInfo.originalCellSize = currentCell.frame.size
                 currentEditingInfo.event = event
