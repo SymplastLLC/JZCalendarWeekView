@@ -251,7 +251,7 @@ open class JZLongPressWeekView: JZBaseWeekView {
     public var magicResizeYOffset: CGFloat = 0
     public var magicDropYOffset: CGFloat = 0
     /// Minimum height for resized events as a fraction of hour height (default: 0.5 = 30 mins)
-    public var minResizeHeightFraction: CGFloat = 0.3
+    public var minResizeHeightFraction: CGFloat = 0.1
     /// Parking lot area to handle drag & drop inside
     public var parkingLotArea: CGRect?
     public var parkingLotIcon: UIImage? = UIImage(systemName: "parkingsign")
@@ -749,7 +749,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
             let currentBottomY = longPressView.frame.maxY
 
             // Calculate new height with minimum constraint
-            let minHeight = max(flowLayout.hourHeightForZoomLevel * minResizeHeightFraction, 20.0) // Minimum 0.5 hour or 20pt
+            let minHeight = max(flowLayout.hourHeightForZoomLevel * minResizeHeightFraction, 10.0) // Minimum 0.5 hour or 20pt
             let newHeight = max(currentBottomY - newTopY, minHeight)
 
             guard newHeight > minHeight else {
@@ -829,7 +829,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
             let currentTopY = longPressView.frame.minY
             
             // Calculate new height with minimum constraint
-            let minHeight = max(flowLayout.hourHeightForZoomLevel * minResizeHeightFraction, 20.0) // Minimum 0.5 hour or 20pt
+            let minHeight = max(flowLayout.hourHeightForZoomLevel * minResizeHeightFraction, 10.0) // Minimum 0.5 hour or 20pt
             let newHeight = max(newBottomY - currentTopY, minHeight)
 
             guard newHeight > minHeight else {
@@ -919,7 +919,10 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 isResizingPressRecognized = true
                 resetDataForShortPress()
                 shortPressView?.removeFromSuperview()
-                coverViewForResizing.frame = collectionView.bounds
+                coverViewForResizing.frame = CGRect(
+                    origin: .zero,
+                    size: collectionView.collectionViewLayout.collectionViewContentSize
+                )
                 collectionView.addSubview(coverViewForResizing)
                 collectionView.isScrollEnabled = false
                 
