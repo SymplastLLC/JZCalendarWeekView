@@ -919,7 +919,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 isResizingPressRecognized = true
                 resetDataForShortPress()
                 shortPressView?.removeFromSuperview()
-                
+                coverViewForResizing.frame = collectionView.bounds
                 collectionView.addSubview(coverViewForResizing)
                 collectionView.isScrollEnabled = false
                 
