@@ -198,6 +198,7 @@ open class JZLongPressWeekView: JZBaseWeekView {
     private struct CurrentEditingInfo {
         /// The editing event when move type long press(used to be currentMovingCell, it is a reference of cell but item will be reused in CollectionView!!)
         var event: JZBaseEvent?
+        var resizeEvent: JZBaseEvent?
         /// The editing cell original size, get it from the long press status began
         var cellSize: CGSize = .zero
         var originalCellSize: CGSize = .zero
@@ -622,7 +623,11 @@ open class JZLongPressWeekView: JZBaseWeekView {
 
     /// Use the event id to check the cell item is the original cell
     private func isOriginalEditingCell(_ cell: UICollectionViewCell) -> Bool {
-        if let cell = cell as? JZLongPressEventCell, let editId = currentEditingInfo.event?.id {
+        if let cell = cell as? JZLongPressEventCell,
+           let editId = currentEditingInfo.event?.id, !isResizingPressRecognized {
+            cell.event.id == editId
+        } else if let cell = cell as? JZLongPressEventCell,
+                  let editId = currentEditingInfo.resizeEvent?.id, isResizingPressRecognized {
             cell.event.id == editId
         } else {
             false
@@ -703,7 +708,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     private func resetDataForLongPress() {
         isResizingPressRecognized = false
         currentPressType = .move
-        currentEditingInfo.event = nil
+        currentEditingInfo.resizeEvent = nil
         currentEditingInfo.allHiddenContentViews.forEach { $0.isHidden = false }
         currentEditingInfo.allHiddenContentViews.removeAll()
         coverViewForResizing.removeFromSuperview()
@@ -877,7 +882,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     
     @objc private func endResizingModeTap(_ gesture: UIGestureRecognizer) {
         if let longPressView,
-           let event = currentEditingInfo.event,
+           let event = currentEditingInfo.resizeEvent,
            longPressView.frame.height != currentEditingInfo.originalCellSize.height,
            let startDate = currentEditingInfo.resizeStartDate {
             longPressDelegate?.weekView(
@@ -961,7 +966,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 currentEditingInfo.resizeEndDate = event.endDate
                 currentEditingInfo.cellSize = currentCell.frame.size
                 currentEditingInfo.originalCellSize = currentCell.frame.size
-                currentEditingInfo.event = event
+                currentEditingInfo.resizeEvent = event
                 getCurrentEditingCells().forEach {
                     $0.contentView.isHidden = true
                     currentEditingInfo.allHiddenContentViews.append($0.contentView)
@@ -990,7 +995,7 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
                 didCancelLongPressAt: nil
             )
             resetDataForLongPress()
-            currentEditingInfo.event = nil
+            currentEditingInfo.resizeEvent = nil
         default:
             break
         }
@@ -1288,12 +1293,13 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     
     private func getCurrentColumn(pointInSelfView: CGPoint) -> Int {
         var column: Int = 0
+        let pointX = pointInSelfView.x - flowLayout.rowHeaderWidth - flowLayout.contentsMargin.left
         if numOfResources > 1 {
             let originalWidth = widthInColumn
             for idx in 0..<numOfResources {
                 let sectionX1 = CGFloat(idx) * originalWidth
                 let sectionX2 = sectionX1 + originalWidth
-                if sectionX1...sectionX2 ~= pointInSelfView.x {
+                if sectionX1...sectionX2 ~= pointX {
                     column = idx
                     break
                 }
