@@ -697,11 +697,13 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
             currentEditingInfo.allOpacityContentViews.forEach { $0.layer.opacity = 1 }
             currentEditingInfo.allOpacityContentViews.removeAll()
         }
+        currentEditingInfo.event = nil
     }
     
     private func resetDataForLongPress() {
         isResizingPressRecognized = false
         currentPressType = .move
+        currentEditingInfo.event = nil
         currentEditingInfo.allHiddenContentViews.forEach { $0.isHidden = false }
         currentEditingInfo.allHiddenContentViews.removeAll()
         coverViewForResizing.removeFromSuperview()
