@@ -93,6 +93,34 @@ extension LongPressViewController: JZBaseViewDelegate {
 // LongPress core
 extension LongPressViewController: JZLongPressViewDelegate, JZLongPressViewDataSource {
     func weekView(
+        _ weekView: JZCalendarWeekView.JZLongPressWeekView,
+        didSingleTap gesture: UITapGestureRecognizer,
+        pressLocation: CGPoint
+    ) {
+        let date = weekView.getDateForPoint(pressLocation)
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MMM dd, yyyy 'at' HH:mm"
+        let message = "Single tap at: \(dateFormatter.string(from: date))"
+        
+        ToastUtil.toastMessageInTheMiddle(message: message)
+        print("Single tap detected at: \(date)")
+    }
+
+    func weekView(
+        _ weekView: JZCalendarWeekView.JZLongPressWeekView,
+        didDoubleTap gesture: UITapGestureRecognizer,
+        pressLocation: CGPoint
+    ) {
+        let date = weekView.getDateForPoint(pressLocation)
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MMM dd, yyyy 'at' HH:mm"
+        let message = "Double tap at: \(dateFormatter.string(from: date))"
+        
+        ToastUtil.toastMessageInTheMiddle(message: message)
+        print("Double tap detected at: \(date)")
+    }
+
+    func weekView(
         _ weekView: JZLongPressWeekView,
         longPressType: JZLongPressWeekView.LongPressType,
         didCancelLongPressAt startDate: Date?

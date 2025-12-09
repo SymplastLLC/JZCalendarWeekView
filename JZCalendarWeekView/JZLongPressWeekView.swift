@@ -77,6 +77,24 @@ public protocol JZLongPressViewDelegate: AnyObject {
         didEndDropInteractionAt startDate: Date,
         in column: Int
     )
+    
+    /// Called when a single tap is detected on the week view
+    ///
+    /// - Parameters:
+    ///   - weekView: current JZBaseWeekView
+    ///   - date: the date and time at the tap location
+    func weekView(_ weekView: JZLongPressWeekView,
+                  didSingleTap gesture: UITapGestureRecognizer,
+                  pressLocation: CGPoint)
+    
+    /// Called when a double tap is detected on the week view
+    ///
+    /// - Parameters:
+    ///   - weekView: current JZBaseWeekView
+    ///   - date: the date and time at the tap location
+    func weekView(_ weekView: JZLongPressWeekView,
+             didDoubleTap gesture: UITapGestureRecognizer,
+             pressLocation: CGPoint)
 }
 
 public protocol JZLongPressViewDataSource: AnyObject {
@@ -181,7 +199,7 @@ extension JZLongPressViewDataSource {
     }
 }
 
-open class JZLongPressWeekView: JZBaseWeekView {
+open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
 
     public enum LongPressType {
         /// when short press position is not on a existed event, this type will create a new event view allowing user to move
@@ -330,17 +348,36 @@ open class JZLongPressWeekView: JZBaseWeekView {
     }()
     private var selectFeedback = UISelectionFeedbackGenerator()
     private var parkingLotFeedback = UIImpactFeedbackGenerator()
+    
+    // Tap gesture recognizers
+    private lazy var singleTapGesture: UITapGestureRecognizer = {
+        let tap = UITapGestureRecognizer(target: self, action: #selector(handleSingleTap(_:)))
+        tap.numberOfTapsRequired = 1
+        tap.delegate = self
+        tap.delaysTouchesBegan = false
+        return tap
+    }()
+    
+    private lazy var doubleTapGesture: UITapGestureRecognizer = {
+        let tap = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTap(_:)))
+        tap.numberOfTapsRequired = 2
+        tap.delaysTouchesEnded = false
+        tap.delegate = self
+        return tap
+    }()
 
     public override init(frame: CGRect) {
         super.init(frame: frame)
         setupDropInteraction()
         setupFeedback()
+        setupTapGestures()
     }
 
     required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         setupDropInteraction()
         setupFeedback()
+        setupTapGestures()
     }
     
     private func setupFeedback() {
@@ -371,6 +408,13 @@ open class JZLongPressWeekView: JZBaseWeekView {
         if longPressTypes.contains(.pickView) {
             collectionView.addGestureRecognizer(veryLongPress)
         }
+    }
+    
+    /// Setup tap gesture recognizers
+    private func setupTapGestures() {
+        
+        collectionView.addGestureRecognizer(singleTapGesture)
+        collectionView.addGestureRecognizer(doubleTapGesture)
     }
 
     /// Updating time label in shortPressView during dragging
@@ -646,20 +690,25 @@ open class JZLongPressWeekView: JZBaseWeekView {
         }
         return editingCells
     }
-}
-
-// Long press Gesture methods
-extension JZLongPressWeekView: UIGestureRecognizerDelegate {
     
     public func gestureRecognizer(
         _ gestureRecognizer: UIGestureRecognizer,
         shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
     ) -> Bool {
-        true
+        if (gestureRecognizer == doubleTapGesture && otherGestureRecognizer == singleTapGesture) ||
+            (gestureRecognizer == singleTapGesture && otherGestureRecognizer == doubleTapGesture) {
+            return true
+        }
+        return false
     }
 
     // Override this function to customise gesture begin conditions
     override open func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        // Always allow tap gestures to begin
+        if gestureRecognizer is UITapGestureRecognizer {
+            return true
+        }
+        
         let pointInSelfView = gestureRecognizer.location(in: self)
         let pointInCollectionView = gestureRecognizer.location(in: collectionView)
 
@@ -1339,7 +1388,52 @@ extension JZLongPressWeekView: UIGestureRecognizerDelegate {
         )
         return shortPressViewStartDate
     }
+    
+    // MARK: - Tap Gesture Handling
+    
+    @objc private func handleSingleTap(_ gesture: UITapGestureRecognizer) {
+        guard gesture.state == .ended else { return }
+        
+        let point = gesture.location(in: collectionView)
+        
+        longPressDelegate?.weekView(self, didSingleTap: gesture, pressLocation: point)
+    }
+    
+    @objc private func handleDoubleTap(_ gesture: UITapGestureRecognizer) {
+        guard gesture.state == .ended else { return }
+        
+        let point = gesture.location(in: collectionView)
+        
+        longPressDelegate?.weekView(self, didDoubleTap: gesture, pressLocation: point)
+    }
+    
+    public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+    
+        let pointInCollectionView = touch.location(in: collectionView)
+        
+        let isGestureEnabled = currentPressType == .move || currentPressType == .addNew
+        
+        if gestureRecognizer == doubleTapGesture && isGestureEnabled {
+            if let indexPath = collectionView.indexPathForItem(at: pointInCollectionView),
+               let cell = collectionView.cellForItem(at: indexPath) as? JZLongPressEventCell,
+               cell.event.isAppointment || cell.event.isAppointmentRequest || cell.event.isCalendarBlock {
+                return false
+            }
+        }
+        
+        if gestureRecognizer == singleTapGesture && isGestureEnabled {
+            if let indexPath = collectionView.indexPathForItem(at: pointInCollectionView),
+               let cell = collectionView.cellForItem(at: indexPath) as? JZLongPressEventCell,
+               cell.event.isAppointment || cell.event.isAppointmentRequest {
+                return false
+            }
+        }
+        
+        return true
+    }
+    
 }
+
 
 // MARK: - UIDropInteractionDelegate
 @available(iOS 14.0, *)
