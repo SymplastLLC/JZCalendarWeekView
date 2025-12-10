@@ -169,6 +169,14 @@ extension JZLongPressViewDelegate {
         didEndDropInteractionAt startDate: Date,
         in column: Int
     ) {}
+    
+    func weekView(_ weekView: JZLongPressWeekView,
+                  didSingleTap gesture: UITapGestureRecognizer,
+                  pressLocation: CGPoint) {}
+
+    func weekView(_ weekView: JZLongPressWeekView,
+                  didDoubleTap gesture: UITapGestureRecognizer,
+                  pressLocation: CGPoint) {}
 }
 
 extension JZLongPressViewDataSource {
@@ -261,6 +269,7 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
             setupGestures()
         }
     }
+    public var isTapGestureEnabled: Bool = false
     /// It is used to identify the minimum time interval(Minute) when dragging the event view (minimum value is 1, maximum is 60)
     public var moveTimeMinInterval: Int = 15
     /// For an addNew event, the event duration mins determine the add new event duration and height
@@ -412,7 +421,7 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
     
     /// Setup tap gesture recognizers
     private func setupTapGestures() {
-        
+        guard isTapGestureEnabled else { return }
         collectionView.addGestureRecognizer(singleTapGesture)
         collectionView.addGestureRecognizer(doubleTapGesture)
     }
@@ -695,6 +704,8 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
         _ gestureRecognizer: UIGestureRecognizer,
         shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
     ) -> Bool {
+        guard isTapGestureEnabled else { return true }
+        
         if (gestureRecognizer == doubleTapGesture && otherGestureRecognizer == singleTapGesture) ||
             (gestureRecognizer == singleTapGesture && otherGestureRecognizer == doubleTapGesture) {
             return true
@@ -1408,7 +1419,7 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
     }
     
     public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
-    
+        guard isTapGestureEnabled else { return true }
         let pointInCollectionView = touch.location(in: collectionView)
         
         let isGestureEnabled = currentPressType == .move || currentPressType == .addNew
