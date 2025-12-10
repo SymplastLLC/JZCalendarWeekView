@@ -82,19 +82,29 @@ public protocol JZLongPressViewDelegate: AnyObject {
     ///
     /// - Parameters:
     ///   - weekView: current JZBaseWeekView
-    ///   - date: the date and time at the tap location
+    ///   - gesture: the tap gesture recognizer
+    ///   - startDate: the start date and time at the tap location (aligned to zoom level grid)
+    ///   - endDate: the end date and time (startDate + zoom level durationPlaceholder)
+    ///   - column: the column (resource index) where the tap occurred
     func weekView(_ weekView: JZLongPressWeekView,
                   didSingleTap gesture: UITapGestureRecognizer,
-                  pressLocation: CGPoint)
+                  startDate: Date,
+                  endDate: Date,
+                  in column: Int)
     
     /// Called when a double tap is detected on the week view
     ///
     /// - Parameters:
     ///   - weekView: current JZBaseWeekView
-    ///   - date: the date and time at the tap location
+    ///   - gesture: the tap gesture recognizer
+    ///   - startDate: the start date and time at the tap location (aligned to zoom level grid)
+    ///   - endDate: the end date and time (startDate + zoom level durationPlaceholder)
+    ///   - column: the column (resource index) where the tap occurred
     func weekView(_ weekView: JZLongPressWeekView,
              didDoubleTap gesture: UITapGestureRecognizer,
-             pressLocation: CGPoint)
+             startDate: Date,
+             endDate: Date,
+             in column: Int)
 }
 
 public protocol JZLongPressViewDataSource: AnyObject {
@@ -172,11 +182,15 @@ extension JZLongPressViewDelegate {
     
     func weekView(_ weekView: JZLongPressWeekView,
                   didSingleTap gesture: UITapGestureRecognizer,
-                  pressLocation: CGPoint) {}
+                  startDate: Date,
+                  endDate: Date,
+                  in column: Int) {}
 
     func weekView(_ weekView: JZLongPressWeekView,
                   didDoubleTap gesture: UITapGestureRecognizer,
-                  pressLocation: CGPoint) {}
+                  startDate: Date,
+                  endDate: Date,
+                  in column: Int) {}
 }
 
 extension JZLongPressViewDataSource {
@@ -269,7 +283,11 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
             setupGestures()
         }
     }
-    public var isTapGestureEnabled: Bool = false
+    public var isTapGestureEnabled: Bool = false {
+        didSet {
+            setupTapGestures()
+        }
+    }
     /// It is used to identify the minimum time interval(Minute) when dragging the event view (minimum value is 1, maximum is 60)
     public var moveTimeMinInterval: Int = 15
     /// For an addNew event, the event duration mins determine the add new event duration and height
@@ -379,14 +397,12 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
         super.init(frame: frame)
         setupDropInteraction()
         setupFeedback()
-        setupTapGestures()
     }
 
     required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         setupDropInteraction()
         setupFeedback()
-        setupTapGestures()
     }
     
     private func setupFeedback() {
@@ -1405,17 +1421,39 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
     @objc private func handleSingleTap(_ gesture: UITapGestureRecognizer) {
         guard gesture.state == .ended else { return }
         
-        let point = gesture.location(in: collectionView)
+        let pointInCollectionView = gesture.location(in: collectionView)
+        let pointInSelfView = gesture.location(in: self)
         
-        longPressDelegate?.weekView(self, didSingleTap: gesture, pressLocation: point)
+        let date = getDateForPoint(pointCollectionView: pointInCollectionView, pointSelfView: pointInSelfView)
+        let durationMinutes = Int(flowLayout.currentZoom.durationPlaceholder / 60)
+        let startDate = getLongPressStartDate(
+            date: date,
+            dateInSection: getDateForPointX(xCollectionView: pointInCollectionView.x, xSelfView: pointInSelfView.x),
+            timeMinInterval: durationMinutes
+        )
+        let endDate = startDate.addingTimeInterval(flowLayout.currentZoom.durationPlaceholder)
+        let column = getCurrentColumn(pointInSelfView: pointInSelfView)
+        
+        longPressDelegate?.weekView(self, didSingleTap: gesture, startDate: startDate, endDate: endDate, in: column)
     }
     
     @objc private func handleDoubleTap(_ gesture: UITapGestureRecognizer) {
         guard gesture.state == .ended else { return }
         
-        let point = gesture.location(in: collectionView)
+        let pointInCollectionView = gesture.location(in: collectionView)
+        let pointInSelfView = gesture.location(in: self)
         
-        longPressDelegate?.weekView(self, didDoubleTap: gesture, pressLocation: point)
+        let date = getDateForPoint(pointCollectionView: pointInCollectionView, pointSelfView: pointInSelfView)
+        let durationMinutes = Int(flowLayout.currentZoom.durationPlaceholder / 60)
+        let startDate = getLongPressStartDate(
+            date: date,
+            dateInSection: getDateForPointX(xCollectionView: pointInCollectionView.x, xSelfView: pointInSelfView.x),
+            timeMinInterval: durationMinutes
+        )
+        let endDate = startDate.addingTimeInterval(flowLayout.currentZoom.durationPlaceholder)
+        let column = getCurrentColumn(pointInSelfView: pointInSelfView)
+        
+        longPressDelegate?.weekView(self, didDoubleTap: gesture, startDate: startDate, endDate: endDate, in: column)
     }
     
     public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
