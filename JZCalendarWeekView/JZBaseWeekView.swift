@@ -41,7 +41,7 @@ open class JZBaseWeekView: UIView {
         return collectionView
     }()
 
-    public var timelineRange: TimelineConfiguration.TimelineType = .range(9...17) {
+    public var timelineRange: TimelineConfiguration.TimelineType = .full {
         didSet {
             flowLayout.timelineType = timelineRange
         }
@@ -117,6 +117,13 @@ open class JZBaseWeekView: UIView {
     open var contentViewHeight: CGFloat {
         frame.height - flowLayout.allDayHeaderHeight - flowLayout.contentsMargin.top - flowLayout.contentsMargin.bottom - flowLayout.topHeaderHeight - flowLayout.columnHeaderHeight - safeAreaInsets.bottom
     }
+    public var widthInColumn: CGFloat {
+        if numOfResources > 1 {
+            contentViewWidth / CGFloat(numOfResources)
+        } else {
+            flowLayout.sectionWidth
+        }
+    }
     private var isFirstAppear: Bool = true
     public var isAllDaySupported: Bool = false
     private var isEnabledHorizontalScrolling: Bool {
@@ -158,7 +165,6 @@ open class JZBaseWeekView: UIView {
         
         addSubview(collectionView)
         collectionView.setAnchorConstraintsFullSizeTo(view: self)
-
         registerViewClasses()
     }
 
@@ -411,8 +417,10 @@ open class JZBaseWeekView: UIView {
             self?.forceReload()
             
             if scrollToTime {
-                self?.flowLayout.scrollCollectionViewTo(time: date,
-                                                        position: .centerVertically)
+                self?.flowLayout.scrollCollectionViewTo(
+                    time: date,
+                    position: .centerVertically
+                )
             }
         }
     }
@@ -428,9 +436,13 @@ open class JZBaseWeekView: UIView {
         let hour = CGFloat(components.hour!) + CGFloat(components.minute!) / 60
         let setTimeY = hour * flowLayout.hourHeightForZoomLevel + flowLayout.contentsMargin.top
         let maxOffsetY = collectionView.contentSize.height - collectionView.frame.height + flowLayout.columnHeaderHeight + flowLayout.allDayHeaderHeight + flowLayout.contentsMargin.bottom + flowLayout.contentsMargin.top + flowLayout.topHeaderHeight
-        collectionView.setContentOffsetWithoutDelegate(CGPoint(x: collectionView.contentOffset.x,
-                                                               y: max(0, min(setTimeY, maxOffsetY))),
-                                                       animated: false)
+        collectionView.setContentOffsetWithoutDelegate(
+            CGPoint(
+                x: collectionView.contentOffset.x,
+                y: max(0, min(setTimeY, maxOffsetY))
+            ),
+            animated: false
+        )
     }
 
     /// Get current event with item indexPath
@@ -438,7 +450,21 @@ open class JZBaseWeekView: UIView {
     /// - Parameter indexPath: The indexPath of an item in collectionView
     open func getCurrentEvent(with indexPath: IndexPath) -> JZBaseEvent? {
         let date = flowLayout.dateForColumnHeader(at: indexPath)
-        return isAllDaySupported ? notAllDayEventsBySection[date]?[indexPath.row] : allEventsBySection[date]?[indexPath.row]
+        if isAllDaySupported {
+            let events = notAllDayEventsBySection[date] ?? []
+            if events.indices.contains(indexPath.row) {
+                return events[indexPath.row]
+            } else {
+                return nil
+            }
+        } else {
+            let events = allEventsBySection[date] ?? []
+            if events.indices.contains(indexPath.row) {
+                return events[indexPath.row]
+            } else {
+                return nil
+            }
+        }
     }
 
     open func getDatesInCurrentPage(isScrolling: Bool) -> [Date] {
@@ -540,7 +566,7 @@ open class JZBaseWeekView: UIView {
      */
     open func getDateForPointY(_ yCollectionView: CGFloat) -> (hour: Int, minute: Int) {
         // ColumnHeader and AllDayHeader(vertical UICollectionReusableView) should be considered in gesture point
-        var adjustedY = yCollectionView - flowLayout.columnHeaderHeight - flowLayout.contentsMargin.top - flowLayout.allDayHeaderHeight
+        var adjustedY = yCollectionView - flowLayout.columnHeaderHeight - flowLayout.contentsMargin.top - flowLayout.allDayHeaderHeight - flowLayout.topHeaderHeight
         let minY: CGFloat = 0
         // contentSize includes all reusableView, margin and scrollable area
         let maxY = collectionView.contentSize.height - flowLayout.contentsMargin.top - flowLayout.contentsMargin.bottom - flowLayout.allDayHeaderHeight - flowLayout.columnHeaderHeight - flowLayout.topHeaderHeight + flowLayout.timeRangeLowerOffset
@@ -905,7 +931,7 @@ extension JZBaseWeekView: WeekViewFlowLayoutDelegate {
     }
 
     public func collectionView(_ collectionView: UICollectionView, layout: JZWeekViewFlowLayout, startTimeForItemAtIndexPath indexPath: IndexPath) -> Date {
-        let date = flowLayout.dateForColumnHeader(at: indexPath)
+        let date = layout.dateForColumnHeader(at: indexPath)
 
         if let events = allEventsBySection[date] {
             guard let event = isAllDaySupported ? notAllDayEventsBySection[date]?[safe: indexPath.item] : events[safe: indexPath.item] else { return Date() }
@@ -916,7 +942,7 @@ extension JZBaseWeekView: WeekViewFlowLayoutDelegate {
     }
 
     public func collectionView(_ collectionView: UICollectionView, layout: JZWeekViewFlowLayout, endTimeForItemAtIndexPath indexPath: IndexPath) -> Date {
-        let date = flowLayout.dateForColumnHeader(at: indexPath)
+        let date = layout.dateForColumnHeader(at: indexPath)
 
         if let events = allEventsBySection[date] {
             guard let event = isAllDaySupported ? notAllDayEventsBySection[date]?[safe: indexPath.item] : events[safe: indexPath.item] else { return Date() }
@@ -927,11 +953,11 @@ extension JZBaseWeekView: WeekViewFlowLayoutDelegate {
     }
     
     public func collectionView(_ collectionView: UICollectionView, layout: JZWeekViewFlowLayout, resourceIndexForItemAtIndexPath indexPath: IndexPath) -> Int {
-        let date = flowLayout.dateForColumnHeader(at: indexPath)
+        let date = layout.dateForColumnHeader(at: indexPath)
 
         if let events = allEventsBySection[date] {
             guard let event = isAllDaySupported ? notAllDayEventsBySection[date]?[safe: indexPath.item] : events[safe: indexPath.item] else { return 0 }
-            return min(event.resourceIndex ?? 0, self.numOfResources - 1)
+            return min(event.resourceIndex ?? 0, numOfResources - 1)
         } else {
             return 0
         }
@@ -943,7 +969,7 @@ extension JZBaseWeekView: WeekViewFlowLayoutDelegate {
 
     // TODO: Only used when multiple cell types are used and need different overlap rules => layoutItemsAttributes
     public func collectionView(_ collectionView: UICollectionView, layout: JZWeekViewFlowLayout, cellTypeForItemAtIndexPath indexPath: IndexPath) -> String {
-        let date = flowLayout.dateForColumnHeader(at: indexPath)
+        let date = layout.dateForColumnHeader(at: indexPath)
 
         guard let events = allEventsBySection[date], let event = events[safe: indexPath.item] else {
             return JZSupplementaryViewKinds.eventCell

@@ -6,7 +6,7 @@
 //  Copyright © 2018 Jeff Zhang. All rights reserved.
 //
 
-import UIKit
+import SwiftUI
 import JZCalendarWeekView
 
 class LongPressViewController: UIViewController {
@@ -27,28 +27,45 @@ class LongPressViewController: UIViewController {
     }
 
     private func setupCalendarView() {
+        calendarWeekView.flowLayout.sectionRightInset = 15
         calendarWeekView.baseDelegate = self
 
         if viewModel.currentSelectedData != nil {
             // For example only
             setupCalendarViewWithSelectedData()
         } else {
-            calendarWeekView.setupCalendar(numOfDays: 5,
-                                           setDate: Date(),
-                                           allEvents: viewModel.eventsByDate,
-                                           scrollType: .pageScroll,
-                                           firstDayOfWeek: .monday,
-                                           scrollableRange: (nil, nil))
+            calendarWeekView.setupCalendar(
+                numOfDays: 5,
+                setDate: Date(),
+                allEvents: viewModel.eventsByDate,
+                scrollType: .pageScroll,
+                firstDayOfWeek: .monday,
+                currentTimelineType: .page,
+                scrollableRange: (nil, nil)
+            )
         }
-
         // LongPress delegate, datasorce and type setup
         calendarWeekView.longPressDelegate = self
         calendarWeekView.longPressDataSource = self
-        calendarWeekView.longPressTypes = [.addNew, .move]
+        calendarWeekView.longPressTypes = [.addNew, .move, .resize, .pickView]
 
         // Optional
         calendarWeekView.addNewDurationMins = 120
-        calendarWeekView.moveTimeMinInterval = 15
+        calendarWeekView.moveTimeMinInterval = calendarWeekView.zoom.value.division.rawValue
+        calendarWeekView.parkingLotArea = CGRect(
+            origin: CGPoint(
+                x: view.bounds.width - 80,
+                y: view.bounds.height - 250
+            ),
+            size: CGSize(
+                width: 60,
+                height: 250
+            )
+        )
+        calendarWeekView.dragPreviewSize = CGSize(
+            width: 200,
+            height: 30
+        )
     }
 
     /// For example only
@@ -75,10 +92,81 @@ extension LongPressViewController: JZBaseViewDelegate {
 
 // LongPress core
 extension LongPressViewController: JZLongPressViewDelegate, JZLongPressViewDataSource {
+    func weekView(
+        _ weekView: JZCalendarWeekView.JZLongPressWeekView,
+        didSingleTap gesture: UITapGestureRecognizer,
+        pressLocation: CGPoint
+    ) {
+        let date = weekView.getDateForPoint(pressLocation)
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MMM dd, yyyy 'at' HH:mm"
+        let message = "Single tap at: \(dateFormatter.string(from: date))"
+        
+        ToastUtil.toastMessageInTheMiddle(message: message)
+        print("Single tap detected at: \(date)")
+    }
 
-    func weekView(_ weekView: JZLongPressWeekView, didEndAddNewLongPressAt startDate: Date) {
-        let newEvent = AllDayEvent(id: UUID().uuidString, title: "New Event", startDate: startDate, endDate: startDate.add(component: .hour, value: weekView.addNewDurationMins/60),
-                             location: "Melbourne", isAllDay: false)
+    func weekView(
+        _ weekView: JZCalendarWeekView.JZLongPressWeekView,
+        didDoubleTap gesture: UITapGestureRecognizer,
+        pressLocation: CGPoint
+    ) {
+        let date = weekView.getDateForPoint(pressLocation)
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MMM dd, yyyy 'at' HH:mm"
+        let message = "Double tap at: \(dateFormatter.string(from: date))"
+        
+        ToastUtil.toastMessageInTheMiddle(message: message)
+        print("Double tap detected at: \(date)")
+    }
+
+    func weekView(
+        _ weekView: JZLongPressWeekView,
+        longPressType: JZLongPressWeekView.LongPressType,
+        didCancelLongPressAt startDate: Date?
+    ) {
+        print(longPressType, startDate?.description ?? "-")
+    }
+    
+    func weekView(
+        _ weekView: JZLongPressWeekView,
+        resizingEvent: JZBaseEvent,
+        didEndResizingAt startDate: Date,
+        endDate: Date?
+    ) {
+        print(resizingEvent, startDate, endDate?.description ?? "")
+    }
+    
+    func weekView(dropId: String, didEndDropInteractionAt startDate: Date, in column: Int) {
+        print(dropId, startDate, column)
+    }
+    
+    func weekView(
+        _ weekView: JZLongPressWeekView,
+        event: JZBaseEvent,
+        didPickViewWith gesture: UILongPressGestureRecognizer,
+        pressLocation: CGPoint,
+        sourceView: UICollectionViewCell
+    ) {
+        print(event, pressLocation, sourceView)
+    }
+    
+    func weekView(
+        _ weekView: JZLongPressWeekView,
+        didEndAddNewLongPressAt startDate: Date,
+        in column: Int,
+        insideParkingLotArea: Bool
+    ) {
+        print("Drop inside parking lot area", insideParkingLotArea)
+        let newEvent = AllDayEvent(
+            id: UUID().uuidString,
+            title: "New Event",
+            startDate: startDate,
+            endDate: startDate.add(component: .hour, value: weekView.addNewDurationMins/60),
+            location: "Melbourne",
+            isAllDay: false
+        )
+        newEvent.resourceIndex = column
 
         if viewModel.eventsByDate[startDate.startOfDay] == nil {
             viewModel.eventsByDate[startDate.startOfDay] = [AllDayEvent]()
@@ -88,12 +176,20 @@ extension LongPressViewController: JZLongPressViewDelegate, JZLongPressViewDataS
         weekView.forceReload(reloadEvents: viewModel.eventsByDate)
     }
 
-    func weekView(_ weekView: JZLongPressWeekView, editingEvent: JZBaseEvent, didEndMoveLongPressAt startDate: Date) {
+    func weekView(
+        _ weekView: JZLongPressWeekView,
+        editingEvent: JZBaseEvent,
+        didEndMoveLongPressAt startDate: Date,
+        in column: Int,
+        insideParkingLotArea: Bool
+    ) {
+        print("Drop inside parking lot area", insideParkingLotArea)
         guard let event = editingEvent as? AllDayEvent else { return }
         let duration = Calendar.current.dateComponents([.minute], from: event.startDate, to: event.endDate).minute!
         let selectedIndex = viewModel.events.firstIndex(where: { $0.id == event.id })!
         viewModel.events[selectedIndex].startDate = startDate
         viewModel.events[selectedIndex].endDate = startDate.add(component: .minute, value: duration)
+        viewModel.events[selectedIndex].resourceIndex = column
 
         viewModel.eventsByDate = JZWeekViewHelper.getIntraEventsByDate(originalEvents: viewModel.events)
         weekView.forceReload(reloadEvents: viewModel.eventsByDate)
@@ -108,13 +204,47 @@ extension LongPressViewController: JZLongPressViewDelegate, JZLongPressViewDataS
     }
 }
 
+@available(iOS 16.0, *)
+struct TestDraggingView: View {
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        Text("Hello, World!")
+            .font(.title)
+            .frame(height: 100)
+            .task {
+                try? await Task.sleep(nanoseconds: 3_000_000_000)
+                await MainActor.run {
+                    dismiss()
+                }
+            }
+            .draggable(UUID().uuidString) {
+                Text("Hello, World!")
+                    .font(.title)
+                    .frame(width: 200, height: 30)
+            }
+    }
+}
+
 // For example only
 extension LongPressViewController: OptionsViewDelegate {
+    
+    @objc private func presentDraggingVC() {
+        if #available(iOS 16.0, *) {
+            let vc = UIHostingController(rootView: TestDraggingView())
+            present(vc, animated: true, completion: nil)
+        }
+    }
 
     private func setupNaviBar() {
         updateNaviBarTitle()
+        let dragViewButton = UIButton(type: .system)
+        dragViewButton.setImage(UIImage(systemName: "hand.draw.fill"), for: .normal)
+        dragViewButton.addTarget(self, action: #selector(presentDraggingVC), for: .touchUpInside)
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: dragViewButton)
+        
         let optionsButton = UIButton(type: .system)
-        optionsButton.setImage(#imageLiteral(resourceName: "icon_options"), for: .normal)
+        optionsButton.setImage(UIImage(systemName: "gear"), for: .normal)
         optionsButton.frame.size = CGSize(width: 25, height: 25)
         if #available(iOS 11.0, *) {
             optionsButton.widthAnchor.constraint(equalToConstant: 25).isActive = true

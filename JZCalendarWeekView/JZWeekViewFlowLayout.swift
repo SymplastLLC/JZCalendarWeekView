@@ -65,8 +65,9 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     open var defaultCurrentTimeLineHeight: CGFloat { 10 }
     open var defaultAllDayOneLineHeight: CGFloat { 30 }
     /// Margin for the flowLayout in collectionView
-    open var contentsMargin: UIEdgeInsets { UIEdgeInsets(top: 10, left: 0, bottom: 10, right: 0) }
-    open var itemMargin: UIEdgeInsets { UIEdgeInsets(top: 1, left: 1, bottom: 1, right: 1) }
+    open var contentsMargin: UIEdgeInsets = UIEdgeInsets(top: 10, left: 0, bottom: 10, right: 0)
+    open var itemMargin: UIEdgeInsets = UIEdgeInsets(top: 1, left: 1, bottom: 1, right: 1)
+    open var sectionRightInset: CGFloat = 0
     /// weekview contentSize height
     open var maxSectionHeight: CGFloat {
         let height = hourHeightForZoomLevel * CGFloat(timelineType.duration) // statement too long for Swift 5 compiler
@@ -91,8 +92,10 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     
     var currentTimeComponents: DateComponents {
         if cachedCurrentTimeComponents[0] == nil {
-            cachedCurrentTimeComponents[0] = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute],
-                                                                         from: Date())
+            cachedCurrentTimeComponents[0] = Calendar.current.dateComponents(
+                [.year, .month, .day, .hour, .minute],
+                from: Date()
+            )
         }
         return cachedCurrentTimeComponents[0] ?? DateComponents()
     }
@@ -461,9 +464,9 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
             
             let widthItem: CGFloat
             if allResourceCount > 1 {
-                widthItem = subsectionWidth
+                widthItem = subsectionWidth - sectionRightInset
             } else {
-                widthItem = sectionWidth
+                widthItem = sectionWidth - sectionRightInset
             }
             
             let resourceOffset = (subsectionWidth * CGFloat(itemResourceIndex)).toDecimal1Value()
@@ -513,12 +516,14 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
         
         for resIdx in 0..<allResourceCount {
             let resourceOffset = nearbyint(subsectionWidth * CGFloat(resIdx))
-            adjustItemsForOverlap(sectionItemAttributes,
-                                  inSection: section,
-                                  sectionMinX: sectionX + resourceOffset,
-                                  currentSectionZ: zIndexForElementKind(JZSupplementaryViewKinds.eventCell),
-                                  resourceIdx: resIdx,
-                                  sectionWidth: subsectionWidth)
+            adjustItemsForOverlap(
+                sectionItemAttributes,
+                inSection: section,
+                sectionMinX: sectionX + resourceOffset,
+                currentSectionZ: zIndexForElementKind(JZSupplementaryViewKinds.eventCell),
+                resourceIdx: resIdx,
+                sectionWidth: subsectionWidth - sectionRightInset
+            )
         }
     }
     
@@ -613,8 +618,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
                 
             let sectionIndexes = NSIndexSet(indexesIn: NSRange(location: indexPath.section, length: 1))
             prepareHorizontalTileSectionLayoutForSections(sectionIndexes)
-            let item = itemAttributes[indexPath] ?? layoutAttributesForCell(at: indexPath, withItemCache: itemAttributes).1[indexPath]
-            return item
+            return itemAttributes[indexPath] == nil ? UICollectionViewLayoutAttributes() : itemAttributes[indexPath]
         }
         
         return attrs
@@ -899,12 +903,14 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
      means the order is wrong.
      2. Efficiency issue for getAvailableRanges and the rest of the code in this method
      */
-    open func adjustItemsForOverlap(_ sectionItemAttributes: [UICollectionViewLayoutAttributesResource],
-                                    inSection: Int,
-                                    sectionMinX: CGFloat,
-                                    currentSectionZ: Int,
-                                    resourceIdx: Int = 0,
-                                    sectionWidth: CGFloat) {
+    open func adjustItemsForOverlap(
+        _ sectionItemAttributes: [UICollectionViewLayoutAttributesResource],
+        inSection: Int,
+        sectionMinX: CGFloat,
+        currentSectionZ: Int,
+        resourceIdx: Int = 0,
+        sectionWidth: CGFloat
+    ) {
         let (maxOverlapIntervalCount, overlapGroups) = groupOverlapItems(items: sectionItemAttributes.filter { $0.resourceIndex == resourceIdx })
         guard maxOverlapIntervalCount > 1 else { return }
         
@@ -914,7 +920,13 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
         
         // First draw the largest overlap items layout (only this case itemWidth is fixed and always at the right position)
         let largestOverlapCountGroup = sortedOverlapGroups[0]
-        setItemsAdjustedAttributes(fullWidth: sectionWidth, items: largestOverlapCountGroup, currentMinX: sectionMinX, sectionZ: &sectionZ, adjustedItems: &adjustedItems)
+        setItemsAdjustedAttributes(
+            fullWidth: sectionWidth,
+            items: largestOverlapCountGroup,
+            currentMinX: sectionMinX,
+            sectionZ: &sectionZ,
+            adjustedItems: &adjustedItems
+        )
         
         for index in 1..<sortedOverlapGroups.count {
             let group = sortedOverlapGroups[index]
@@ -1046,36 +1058,55 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     /// Refer to the previous algorithm but integrated with groups
     /// - Parameter items: All the items(cells) in the UICollectionView
     /// - Returns: maxOverlapIntervalCount and all the maximum overlap groups
-    func groupOverlapItems(items: [UICollectionViewLayoutAttributes]) -> (maxOverlapIntervalCount: Int, overlapGroups: [[UICollectionViewLayoutAttributes]]) {
-        var maxOverlap = 0, currentOverlap = 0
-        let sortedMinYItems = items.sorted { $0.frame.minY < $1.frame.minY }
-        let sortedMaxYItems = items.sorted { $0.frame.maxY < $1.frame.maxY }
-        let itemCount = items.count
+    func groupOverlapItems(
+        items: [UICollectionViewLayoutAttributes]
+    ) -> (maxOverlapIntervalCount: Int, overlapGroups: [[UICollectionViewLayoutAttributes]]) {
+        guard !items.isEmpty else { return (0, []) }
         
-        var i = 0, j = 0
-        var overlapGroups = [[UICollectionViewLayoutAttributes]]()
-        var currentOverlapGroup = [UICollectionViewLayoutAttributes]()
-        var shouldAppendToOverlapGroups: Bool = false
-        while i < itemCount && j < itemCount {
-            if sortedMinYItems[i].frame.minY < sortedMaxYItems[j].frame.maxY {
-                currentOverlap += 1
-                maxOverlap = max(maxOverlap, currentOverlap)
-                shouldAppendToOverlapGroups = true
-                currentOverlapGroup.append(sortedMinYItems[i])
-                i += 1
-            } else {
-                currentOverlap -= 1
-                // should not append to group with continuous minus
-                if shouldAppendToOverlapGroups {
-                    if currentOverlapGroup.count > 1 { overlapGroups.append(currentOverlapGroup) }
-                    shouldAppendToOverlapGroups = false
+        // Sort items by start time (minY)
+        let sortedItems = items.sorted { $0.frame.minY < $1.frame.minY }
+        var overlapGroups: [[UICollectionViewLayoutAttributes]] = []
+        var processedItems = Set<UICollectionViewLayoutAttributes>()
+        var maxOverlap = 0
+        
+        for item in sortedItems {
+            // Skip if this item is already in a group
+            if processedItems.contains(item) { continue }
+            
+            // Start a new group with this item
+            var currentGroup = [item]
+            processedItems.insert(item)
+            
+            // Find all items that overlap with current group
+            var didAddItems = true
+            while didAddItems {
+                didAddItems = false
+                
+                for potentialItem in sortedItems {
+                    // Skip if already processed
+                    if processedItems.contains(potentialItem) { continue }
+                    
+                    // Check if it overlaps with any item in current group
+                    let overlapsWithGroup = currentGroup.contains { groupItem in
+                        return (potentialItem.frame.minY < groupItem.frame.maxY &&
+                                potentialItem.frame.maxY > groupItem.frame.minY)
+                    }
+                    
+                    if overlapsWithGroup {
+                        currentGroup.append(potentialItem)
+                        processedItems.insert(potentialItem)
+                        didAddItems = true
+                    }
                 }
-                currentOverlapGroup.removeAll { $0 == sortedMaxYItems[j] }
-                j += 1
+            }
+            
+            // Only add groups with multiple items
+            if currentGroup.count > 1 {
+                overlapGroups.append(currentGroup)
+                maxOverlap = max(maxOverlap, currentGroup.count)
             }
         }
-        // Add last currentOverlapGroup
-        if currentOverlapGroup.count > 1 { overlapGroups.append(currentOverlapGroup) }
+        
         return (maxOverlap, overlapGroups)
     }
     

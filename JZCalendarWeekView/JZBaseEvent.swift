@@ -14,6 +14,7 @@ open class JZBaseEvent: NSObject, NSCopying {
 
     /// Unique id for each event to identify an event, especially for cross-day events
     public var id: String
+    public var uniqId: UUID
     public var isPlaceholder: Bool = false
     public var isCalendarBlock: Bool = false
     public var isAppointment: Bool = false
@@ -32,11 +33,8 @@ open class JZBaseEvent: NSObject, NSCopying {
     public var isHiddenCalendarBlockOptions = false
     public var isDimmed = false
     public var inParkingLot = false
-    
-    @available(*, deprecated, message: "Use the 'data' property instead this!")
-    public var appointmentRequest: Any?
-    @available(*, deprecated, message: "Use the 'data' property instead this!")
-    public var appointment: Any?
+    public var isAvailableForMoving: Bool = false
+    public var isAvailableForResizing: Bool = false
     
     public var data: Any?
     public var status: Any?
@@ -44,22 +42,16 @@ open class JZBaseEvent: NSObject, NSCopying {
     public var providerId: Int?
     public var resourceId: String?
     var testColor: UIColor?
-    
-    @available(*, deprecated, message: "Use the 'isAppointmentRequest' property instead this!")
-    public var isAppointmentRequestItemEvent: Bool {
-        appointmentRequest != nil
-    }
-    
-    @available(*, deprecated, message: "Use the 'isAppointment' property instead this!")
-    public var isAppointmentEvent: Bool {
-        appointment != nil
-    }
 
-    public init(id: String = "",
-                startDate: Date,
-                endDate: Date,
-                resourceIndex: Int? = nil) {
+    public init(
+        id: String = "",
+        uniqId: UUID = UUID(),
+        startDate: Date,
+        endDate: Date,
+        resourceIndex: Int? = nil
+    ) {
         self.id = id
+        self.uniqId = uniqId
         self.startDate = startDate
         self.endDate = endDate
         self.intraStartDate = startDate
@@ -70,30 +62,63 @@ open class JZBaseEvent: NSObject, NSCopying {
     // Must be overrided
     // Shadow copy is enough for JZWeekViewHelper to create multiple events for cross-day events
     open func copy(with zone: NSZone? = nil) -> Any {
-        JZBaseEvent(id: id, startDate: startDate, endDate: endDate, resourceIndex: resourceIndex)
+        let copyEvent = JZBaseEvent(
+            id: id,
+            uniqId: uniqId,
+            startDate: startDate,
+            endDate: endDate,
+            resourceIndex: resourceIndex
+        )
+        copyEvent.isAppointment = isAppointment
+        copyEvent.inParkingLot = inParkingLot
+        copyEvent.isAvailableForMoving = isAvailableForMoving
+        copyEvent.isAvailableForResizing = isAvailableForResizing
+        copyEvent.data = data
+        copyEvent.status = status
+        copyEvent.zIndex = zIndex
+        copyEvent.providerId = providerId
+        copyEvent.resourceId = resourceId
+        return copyEvent
     }
 }
 
 open class SKBaseEvent<T>: JZBaseEvent {
-    
     public var newData: T?
     
+    open override func copy(with zone: NSZone? = nil) -> Any {
+        let copyEvent = SKBaseEvent(
+            id: id,
+            uniqId: uniqId,
+            startDate: startDate,
+            endDate: endDate,
+            resourceIndex: resourceIndex
+        )
+        copyEvent.isAppointment = isAppointment
+        copyEvent.inParkingLot = inParkingLot
+        copyEvent.isAvailableForMoving = isAvailableForMoving
+        copyEvent.isAvailableForResizing = isAvailableForResizing
+        copyEvent.data = data
+        copyEvent.status = status
+        copyEvent.zIndex = zIndex
+        copyEvent.providerId = providerId
+        copyEvent.resourceId = resourceId
+        copyEvent.newData = newData
+        return copyEvent
+    }
 }
 
 public extension JZBaseEvent {
-    
     var stubImage: UIImage? {
         UIImage(named: "background_request")
     }
 
     var stubColor: UIColor {
         if let img = stubImage {
-            return UIColor(patternImage: img)
+            UIColor(patternImage: img)
         } else {
-            return UIColor(hexString: "#fdfec8")
+            UIColor(hexString: "#fdfec8")
         }
     }
-    
 }
 
 #endif
