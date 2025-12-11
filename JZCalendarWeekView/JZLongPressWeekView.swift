@@ -437,6 +437,8 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
     
     /// Setup tap gesture recognizers
     private func setupTapGestures() {
+        collectionView.removeGestureRecognizer(singleTapGesture)
+        collectionView.removeGestureRecognizer(doubleTapGesture)
         guard isTapGestureEnabled else { return }
         collectionView.addGestureRecognizer(singleTapGesture)
         collectionView.addGestureRecognizer(doubleTapGesture)
