@@ -722,7 +722,8 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
         _ gestureRecognizer: UIGestureRecognizer,
         shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
     ) -> Bool {
-        guard isTapGestureEnabled else { return true }
+        guard isTapGestureEnabled,
+                gestureRecognizer is UITapGestureRecognizer else { return true }
         
         if (gestureRecognizer == doubleTapGesture && otherGestureRecognizer == singleTapGesture) ||
             (gestureRecognizer == singleTapGesture && otherGestureRecognizer == doubleTapGesture) {
