@@ -141,6 +141,20 @@ extension JZLongPressViewDelegate {
     // Keep them optional
     public func weekView(
         _ weekView: JZLongPressWeekView,
+        didDoubleTap gesture: UITapGestureRecognizer,
+        startDate: Date,
+        endDate: Date,
+        in column: Int
+    ) {}
+    public func weekView(
+        _ weekView: JZLongPressWeekView,
+        didSingleTap gesture: UITapGestureRecognizer,
+        startDate: Date,
+        endDate: Date,
+        in column: Int
+    ) {}
+    public func weekView(
+        _ weekView: JZLongPressWeekView,
         longPressType: JZLongPressWeekView.LongPressType,
         didCancelLongPressAt startDate: Date?
     ) {}
@@ -179,18 +193,6 @@ extension JZLongPressViewDelegate {
         didEndDropInteractionAt startDate: Date,
         in column: Int
     ) {}
-    
-    func weekView(_ weekView: JZLongPressWeekView,
-                  didSingleTap gesture: UITapGestureRecognizer,
-                  startDate: Date,
-                  endDate: Date,
-                  in column: Int) {}
-
-    func weekView(_ weekView: JZLongPressWeekView,
-                  didDoubleTap gesture: UITapGestureRecognizer,
-                  startDate: Date,
-                  endDate: Date,
-                  in column: Int) {}
 }
 
 extension JZLongPressViewDataSource {
@@ -304,7 +306,7 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
     /// The longPressTimeLabel along with shortPressView, can be customised
     public var pressTimeLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 17)
+        label.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
         label.textColor = UIColor.white
         label.backgroundColor = UIColor.black.withAlphaComponent(0.6)
         label.layer.cornerRadius = 5
@@ -606,7 +608,7 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
         
         // timeText width will change from 00:00 - 24:00, and for each time the length will be different
         // add 5 to ensure the max width
-        let labelHeight: CGFloat = 20
+        let labelHeight: CGFloat = 30
         let textWidth = UILabel.getLabelWidth(labelHeight, font: pressTimeLabel.font, text: "23:59 PM")
         let timeLabelWidth: CGFloat
         
@@ -800,13 +802,38 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
         pressPosition = nil
     }
     
+    private func calculateResizingDate(
+        topY: CGFloat,
+        for date: Date?,
+        pointInCollectionView: CGPoint = .zero,
+        pointInSelfView: CGPoint = .zero
+    ) -> Date {
+        let resizeDate: Date
+        if let date {
+            let newYValue = getDateForPointY(topY)
+            let newDate = date.set(hour: newYValue.hour, minute: newYValue.minute)
+            let currentMin = Calendar.current.component(.minute, from: newDate)
+            let minValue = (currentMin/moveTimeMinInterval) * moveTimeMinInterval
+            resizeDate = newDate.set(minute: minValue)
+        } else {
+            // this may works incorrect
+            resizeDate = getPressViewStartDate(
+                pointInCollectionView: pointInCollectionView,
+                pointInSelfView: pointInSelfView,
+                magicYOffset: magicResizeYOffset,
+                pressPositionYToViewTop: pressPosition?.yToViewTop
+            )
+        }
+        return resizeDate
+    }
+    
     @objc private func handleUpDotPanGesture(_ gesture: UIPanGestureRecognizer) {
         guard let longPressView else { return }
 
         let state = gesture.state
         let translationY = gesture.translation(in: longPressView.superview).y
         let pointInSelfView = gesture.location(in: self)
-        let labelHeight: CGFloat = 20
+        let labelHeight: CGFloat = 30
         let pointInCollectionView = gesture.location(in: collectionView)
 
         switch state {
@@ -852,20 +879,17 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
 
                 // Update cellSize for consistency
                 currentEditingInfo.cellSize.height = newHeight
-                let updatedMinY = newTopY - labelHeight
-                let resizeDate = getPressViewStartDate(
+                let resizeDate = calculateResizingDate(
+                    topY: newTopY,
+                    for: currentEditingInfo.resizeEvent?.startDate,
                     pointInCollectionView: pointInCollectionView,
-                    pointInSelfView: CGPoint(
-                        x: longPressView.frame.midX,
-                        y: newTopY
-                    ),
-                    magicYOffset: magicResizeYOffset
+                    pointInSelfView: pointInSelfView
                 )
                 currentEditingInfo.resizeStartDate = resizeDate
                 updateTimeLabelText(time: resizeDate)
                 pressTimeLabel.frame.origin = CGPoint(
                     x: longPressView.frame.origin.x,
-                    y: updatedMinY
+                    y: newTopY - labelHeight
                 )
                 updateScroll(pointInSelfView: pointInSelfView)
                 // Reset translation for next iteration (smooth continuous dragging)
@@ -890,7 +914,7 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
         
         switch state {
         case .began:
-            let labelHeight: CGFloat = 20
+            let labelHeight: CGFloat = 30
             let timeLabelWidth = UILabel.getLabelWidth(labelHeight, font: pressTimeLabel.font, text: "23:59 PM")
             pressTimeLabel.frame = CGRect(
                 x: longPressView.frame.origin.x,
@@ -932,13 +956,11 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
                 // Update cellSize for consistency
                 currentEditingInfo.cellSize.height = newHeight
                 let updatedMaxY = longPressView.frame.origin.y + newHeight
-                let resizeDate = getPressViewStartDate(
+                let resizeDate = calculateResizingDate(
+                    topY: updatedMaxY,
+                    for: currentEditingInfo.resizeEvent?.endDate,
                     pointInCollectionView: pointInCollectionView,
-                    pointInSelfView: CGPoint(
-                        x: longPressView.frame.midX,
-                        y: updatedMaxY
-                    ),
-                    magicYOffset: magicResizeYOffset
+                    pointInSelfView: pointInSelfView
                 )
                 currentEditingInfo.resizeEndDate = resizeDate
                 updateTimeLabelText(time: resizeDate)
@@ -1046,6 +1068,10 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
                 currentEditingInfo.cellSize = currentCell.frame.size
                 currentEditingInfo.originalCellSize = currentCell.frame.size
                 currentEditingInfo.resizeEvent = event
+                pressPosition = (
+                    pointInCollectionView.x - currentCell.frame.origin.x,
+                    pointInCollectionView.y - currentCell.frame.origin.y
+                )
                 getCurrentEditingCells().forEach {
                     $0.contentView.isHidden = true
                     currentEditingInfo.allHiddenContentViews.append($0.contentView)
@@ -1420,7 +1446,6 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
     }
     
     // MARK: - Tap Gesture Handling
-    
     @objc private func handleSingleTap(_ gesture: UITapGestureRecognizer) {
         guard gesture.state == .ended else { return }
         
