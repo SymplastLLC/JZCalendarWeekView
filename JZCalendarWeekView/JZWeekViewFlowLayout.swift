@@ -618,7 +618,8 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
                 
             let sectionIndexes = NSIndexSet(indexesIn: NSRange(location: indexPath.section, length: 1))
             prepareHorizontalTileSectionLayoutForSections(sectionIndexes)
-            return itemAttributes[indexPath] == nil ? UICollectionViewLayoutAttributes() : itemAttributes[indexPath]
+            let item = itemAttributes[indexPath] ?? layoutAttributesForCell(at: indexPath, withItemCache: itemAttributes).1[indexPath]
+            return item
         }
         
         return attrs
@@ -719,10 +720,10 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
         }()
         
         if let attrs = cached?.copy() as? UICollectionViewLayoutAttributes {
-            return attrs 
+            return attrs
         }
-        if let superAttrs = super.initialLayoutAttributesForAppearingSupplementaryElement(ofKind: elementKind, at: elementIndexPath) { 
-            return superAttrs 
+        if let superAttrs = super.initialLayoutAttributesForAppearingSupplementaryElement(ofKind: elementKind, at: elementIndexPath) {
+            return superAttrs
         }
         let fallback = UICollectionViewLayoutAttributes(forSupplementaryViewOfKind: elementKind, with: elementIndexPath)
         fallback.alpha = 0
@@ -751,10 +752,10 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
         }()
         
         if let attrs = cached?.copy() as? UICollectionViewLayoutAttributes {
-            return attrs 
+            return attrs
         }
-        if let superAttrs = super.finalLayoutAttributesForDisappearingSupplementaryElement(ofKind: elementKind, at: elementIndexPath) { 
-            return superAttrs 
+        if let superAttrs = super.finalLayoutAttributesForDisappearingSupplementaryElement(ofKind: elementKind, at: elementIndexPath) {
+            return superAttrs
         }
         let fallback = UICollectionViewLayoutAttributes(forSupplementaryViewOfKind: elementKind, with: elementIndexPath)
         fallback.alpha = 0
@@ -787,11 +788,11 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
                 nil
             }
         }()
-        if let attrs = cached?.copy() as? UICollectionViewLayoutAttributes { 
-            return attrs 
+        if let attrs = cached?.copy() as? UICollectionViewLayoutAttributes {
+            return attrs
         }
-        if let superAttrs = super.initialLayoutAttributesForAppearingDecorationElement(ofKind: elementKind, at: decorationIndexPath) { 
-            return superAttrs 
+        if let superAttrs = super.initialLayoutAttributesForAppearingDecorationElement(ofKind: elementKind, at: decorationIndexPath) {
+            return superAttrs
         }
         let fallback = UICollectionViewLayoutAttributes(forDecorationViewOfKind: elementKind, with: decorationIndexPath)
         fallback.alpha = 0
@@ -824,11 +825,11 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
                 nil
             }
         }()
-        if let attrs = cached?.copy() as? UICollectionViewLayoutAttributes { 
-            return attrs 
+        if let attrs = cached?.copy() as? UICollectionViewLayoutAttributes {
+            return attrs
         }
-        if let superAttrs = super.finalLayoutAttributesForDisappearingDecorationElement(ofKind: elementKind, at: decorationIndexPath) { 
-            return superAttrs 
+        if let superAttrs = super.finalLayoutAttributesForDisappearingDecorationElement(ofKind: elementKind, at: decorationIndexPath) {
+            return superAttrs
         }
         let fallback = UICollectionViewLayoutAttributes(forDecorationViewOfKind: elementKind, with: decorationIndexPath)
         fallback.alpha = 0
@@ -1058,55 +1059,36 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     /// Refer to the previous algorithm but integrated with groups
     /// - Parameter items: All the items(cells) in the UICollectionView
     /// - Returns: maxOverlapIntervalCount and all the maximum overlap groups
-    func groupOverlapItems(
-        items: [UICollectionViewLayoutAttributes]
-    ) -> (maxOverlapIntervalCount: Int, overlapGroups: [[UICollectionViewLayoutAttributes]]) {
-        guard !items.isEmpty else { return (0, []) }
+    func groupOverlapItems(items: [UICollectionViewLayoutAttributes]) -> (maxOverlapIntervalCount: Int, overlapGroups: [[UICollectionViewLayoutAttributes]]) {
+        var maxOverlap = 0, currentOverlap = 0
+        let sortedMinYItems = items.sorted { $0.frame.minY < $1.frame.minY }
+        let sortedMaxYItems = items.sorted { $0.frame.maxY < $1.frame.maxY }
+        let itemCount = items.count
         
-        // Sort items by start time (minY)
-        let sortedItems = items.sorted { $0.frame.minY < $1.frame.minY }
-        var overlapGroups: [[UICollectionViewLayoutAttributes]] = []
-        var processedItems = Set<UICollectionViewLayoutAttributes>()
-        var maxOverlap = 0
-        
-        for item in sortedItems {
-            // Skip if this item is already in a group
-            if processedItems.contains(item) { continue }
-            
-            // Start a new group with this item
-            var currentGroup = [item]
-            processedItems.insert(item)
-            
-            // Find all items that overlap with current group
-            var didAddItems = true
-            while didAddItems {
-                didAddItems = false
-                
-                for potentialItem in sortedItems {
-                    // Skip if already processed
-                    if processedItems.contains(potentialItem) { continue }
-                    
-                    // Check if it overlaps with any item in current group
-                    let overlapsWithGroup = currentGroup.contains { groupItem in
-                        return (potentialItem.frame.minY < groupItem.frame.maxY &&
-                                potentialItem.frame.maxY > groupItem.frame.minY)
-                    }
-                    
-                    if overlapsWithGroup {
-                        currentGroup.append(potentialItem)
-                        processedItems.insert(potentialItem)
-                        didAddItems = true
-                    }
+        var i = 0, j = 0
+        var overlapGroups = [[UICollectionViewLayoutAttributes]]()
+        var currentOverlapGroup = [UICollectionViewLayoutAttributes]()
+        var shouldAppendToOverlapGroups: Bool = false
+        while i < itemCount && j < itemCount {
+            if sortedMinYItems[i].frame.minY < sortedMaxYItems[j].frame.maxY {
+                currentOverlap += 1
+                maxOverlap = max(maxOverlap, currentOverlap)
+                shouldAppendToOverlapGroups = true
+                currentOverlapGroup.append(sortedMinYItems[i])
+                i += 1
+            } else {
+                currentOverlap -= 1
+                // should not append to group with continuous minus
+                if shouldAppendToOverlapGroups {
+                    if currentOverlapGroup.count > 1 { overlapGroups.append(currentOverlapGroup) }
+                    shouldAppendToOverlapGroups = false
                 }
-            }
-            
-            // Only add groups with multiple items
-            if currentGroup.count > 1 {
-                overlapGroups.append(currentGroup)
-                maxOverlap = max(maxOverlap, currentGroup.count)
+                currentOverlapGroup.removeAll { $0 == sortedMaxYItems[j] }
+                j += 1
             }
         }
-        
+        // Add last currentOverlapGroup
+        if currentOverlapGroup.count > 1 { overlapGroups.append(currentOverlapGroup) }
         return (maxOverlap, overlapGroups)
     }
     
