@@ -1485,7 +1485,7 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
     }
     
     public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
-        guard isTapGestureEnabled else { return true }
+        guard isTapGestureEnabled && gestureRecognizer != veryLongPress else { return true }
         let pointInCollectionView = touch.location(in: collectionView)
         
         let isGestureEnabled = currentPressType == .move || currentPressType == .addNew
