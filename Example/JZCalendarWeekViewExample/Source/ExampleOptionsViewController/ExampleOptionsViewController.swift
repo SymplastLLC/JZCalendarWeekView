@@ -12,7 +12,7 @@ import JZCalendarWeekView
 extension UIApplication {
 
     var activeWindow: UIWindow? {
-        windows.first(where: { $0.isKeyWindow })
+        (connectedScenes.first as? UIWindowScene)?.windows.first(where: { $0.isKeyWindow })
     }
     
 }
