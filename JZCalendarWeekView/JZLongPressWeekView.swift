@@ -335,7 +335,7 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
     open var longPressRightMarginX: CGFloat { frame.width }
     
     private var isResizingPressRecognized = false
-    private var isPickViewPressRecognized = false
+    public var isPickViewPressRecognized = false
     private lazy var shortLongPress: UILongPressGestureRecognizer = {
         let shortPress = UILongPressGestureRecognizer(
             target: self,
@@ -1487,7 +1487,7 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
         guard isTapGestureEnabled else { return true }
         let pointInCollectionView = touch.location(in: collectionView)
         let isGestureEnabled = currentPressType == .move || currentPressType == .addNew
-        
+
         if gestureRecognizer == doubleTapGesture && isGestureEnabled {
             if let indexPath = collectionView.indexPathForItem(at: pointInCollectionView),
                let cell = collectionView.cellForItem(at: indexPath) as? JZLongPressEventCell,
