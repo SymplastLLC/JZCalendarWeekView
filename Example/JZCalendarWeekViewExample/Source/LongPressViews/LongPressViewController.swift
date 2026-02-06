@@ -125,7 +125,7 @@ extension LongPressViewController: JZLongPressViewDelegate, JZLongPressViewDataS
         longPressType: JZLongPressWeekView.LongPressType,
         didCancelLongPressAt startDate: Date?
     ) {
-        print(longPressType, startDate?.description ?? "-")
+        print(longPressType, startDate?.description ?? "-", "did cancel")
     }
     
     func weekView(
@@ -148,7 +148,7 @@ extension LongPressViewController: JZLongPressViewDelegate, JZLongPressViewDataS
         pressLocation: CGPoint,
         sourceView: UICollectionViewCell
     ) {
-        print(event, pressLocation, sourceView)
+        print("pick view", event, pressLocation, sourceView)
     }
     
     func weekView(
@@ -204,7 +204,6 @@ extension LongPressViewController: JZLongPressViewDelegate, JZLongPressViewDataS
     }
 }
 
-@available(iOS 16.0, *)
 struct TestDraggingView: View {
     @Environment(\.dismiss) private var dismiss
     
@@ -230,10 +229,8 @@ struct TestDraggingView: View {
 extension LongPressViewController: OptionsViewDelegate {
     
     @objc private func presentDraggingVC() {
-        if #available(iOS 16.0, *) {
-            let vc = UIHostingController(rootView: TestDraggingView())
-            present(vc, animated: true, completion: nil)
-        }
+        let vc = UIHostingController(rootView: TestDraggingView())
+        present(vc, animated: true, completion: nil)
     }
 
     private func setupNaviBar() {
@@ -246,10 +243,8 @@ extension LongPressViewController: OptionsViewDelegate {
         let optionsButton = UIButton(type: .system)
         optionsButton.setImage(UIImage(systemName: "gear"), for: .normal)
         optionsButton.frame.size = CGSize(width: 25, height: 25)
-        if #available(iOS 11.0, *) {
-            optionsButton.widthAnchor.constraint(equalToConstant: 25).isActive = true
-            optionsButton.heightAnchor.constraint(equalToConstant: 25).isActive = true
-        }
+        optionsButton.widthAnchor.constraint(equalToConstant: 25).isActive = true
+        optionsButton.heightAnchor.constraint(equalToConstant: 25).isActive = true
         optionsButton.addTarget(self, action: #selector(presentOptionsVC), for: .touchUpInside)
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(customView: optionsButton)
     }

@@ -37,13 +37,7 @@ open class ToastUtil {
         addToastLabel(message: message)
 
         currentWindow.addSubview(toastView)
-        var bottomYAnchor: NSLayoutYAxisAnchor
-        // Support iPhone X
-        if #available(iOS 11.0, *) {
-            bottomYAnchor = currentWindow.safeAreaLayoutGuide.bottomAnchor
-        } else {
-            bottomYAnchor = currentWindow.bottomAnchor
-        }
+        let bottomYAnchor = currentWindow.safeAreaLayoutGuide.bottomAnchor
         toastView.setAnchorCenterHorizontallyTo(view: currentWindow, heightAnchor: defaultMidHeight, bottomAnchor: (bottomYAnchor, -defaultMidToBottom))
         toastView.widthAnchor.constraint(greaterThanOrEqualToConstant: defaultMidMinWidth).isActive = true
 

@@ -335,7 +335,7 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
     open var longPressRightMarginX: CGFloat { frame.width }
     
     private var isResizingPressRecognized = false
-    private var isPickViewPressRecognized = false
+    public var isPickViewPressRecognized = false
     private lazy var shortLongPress: UILongPressGestureRecognizer = {
         let shortPress = UILongPressGestureRecognizer(
             target: self,
@@ -415,10 +415,8 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
     }
     
     open func setupDropInteraction() {
-        if #available(iOS 14.0, *) {
-            let dropInteraction = UIDropInteraction(delegate: self)
-            collectionView.addInteraction(dropInteraction)
-        }
+        let dropInteraction = UIDropInteraction(delegate: self)
+        collectionView.addInteraction(dropInteraction)
     }
 
     private func setupGestures() {
@@ -724,8 +722,7 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
         _ gestureRecognizer: UIGestureRecognizer,
         shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
     ) -> Bool {
-        guard isTapGestureEnabled,
-                gestureRecognizer is UITapGestureRecognizer else { return true }
+        guard isTapGestureEnabled, gestureRecognizer is UITapGestureRecognizer else { return true }
         
         if (gestureRecognizer == doubleTapGesture && otherGestureRecognizer == singleTapGesture) ||
             (gestureRecognizer == singleTapGesture && otherGestureRecognizer == doubleTapGesture) {
@@ -738,6 +735,8 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
     override open func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         // Always allow tap gestures to begin
         if gestureRecognizer is UITapGestureRecognizer {
+            return true
+        } else if gestureRecognizer == veryLongPress {
             return true
         }
         
@@ -763,10 +762,6 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
         }
         // Long press should not begin if no events at long press position and resize not required
         if !hasItemAtPoint && !longPressTypes.contains(.resize) {
-            return false
-        }
-        // Long press should not begin if no events at long press position and pick not required
-        if !hasItemAtPoint && !longPressTypes.contains(.pickView) {
             return false
         }
         return true
@@ -1136,7 +1131,7 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
                     sourceView: currentCell
                 )
             }
-        case .cancelled, .failed, .ended:
+        case .cancelled, .failed:
             isPickViewPressRecognized = false
             currentPressType = .move
             longPressDelegate?.weekView(
@@ -1144,6 +1139,10 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
                 longPressType: .pickView,
                 didCancelLongPressAt: nil
             )
+            currentEditingInfo.event = nil
+        case .ended:
+            isPickViewPressRecognized = false
+            currentPressType = .move
             currentEditingInfo.event = nil
         default:
             break
@@ -1487,9 +1486,8 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
     public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
         guard isTapGestureEnabled else { return true }
         let pointInCollectionView = touch.location(in: collectionView)
-        
         let isGestureEnabled = currentPressType == .move || currentPressType == .addNew
-        
+
         if gestureRecognizer == doubleTapGesture && isGestureEnabled {
             if let indexPath = collectionView.indexPathForItem(at: pointInCollectionView),
                let cell = collectionView.cellForItem(at: indexPath) as? JZLongPressEventCell,
@@ -1497,7 +1495,6 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
                 return false
             }
         }
-        
         if gestureRecognizer == singleTapGesture && isGestureEnabled {
             if let indexPath = collectionView.indexPathForItem(at: pointInCollectionView),
                let cell = collectionView.cellForItem(at: indexPath) as? JZLongPressEventCell,
@@ -1505,7 +1502,6 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
                 return false
             }
         }
-        
         return true
     }
     
@@ -1513,7 +1509,6 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
 
 
 // MARK: - UIDropInteractionDelegate
-@available(iOS 14.0, *)
 extension JZLongPressWeekView: UIDropInteractionDelegate {
     public func dropInteraction(_ interaction: UIDropInteraction, canHandle session: UIDropSession) -> Bool {
         session.canLoadObjects(ofClass: String.self) && longPressTypes.contains(.move)

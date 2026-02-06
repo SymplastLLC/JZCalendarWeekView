@@ -37,19 +37,11 @@ class LongPressWeekView: JZLongPressWeekView {
         } else if event?.id == "11" {
             return .systemBrown
         } else if event?.id == "2" {
-            if #available(iOS 15.0, *) {
-                return .systemCyan
-            } else {
-                return .black
-            }
+            return .systemCyan
         } else if event?.id == "12" {
             return .systemOrange
         } else if event?.id == "3" {
-            if #available(iOS 15.0, *) {
-                return .systemMint
-            } else {
-                return .brown
-            }
+            return .systemMint
         }
         return UIColor(hex: 0x0899FF)
     }

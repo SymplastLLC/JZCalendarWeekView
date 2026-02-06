@@ -74,10 +74,8 @@ extension DefaultViewController: OptionsViewDelegate {
         let optionsButton = UIButton(type: .system)
         optionsButton.setImage(#imageLiteral(resourceName: "icon_options"), for: .normal)
         optionsButton.frame.size = CGSize(width: 25, height: 25)
-        if #available(iOS 11.0, *) {
-            optionsButton.widthAnchor.constraint(equalToConstant: 25).isActive = true
-            optionsButton.heightAnchor.constraint(equalToConstant: 25).isActive = true
-        }
+        optionsButton.widthAnchor.constraint(equalToConstant: 25).isActive = true
+        optionsButton.heightAnchor.constraint(equalToConstant: 25).isActive = true
         optionsButton.addTarget(self, action: #selector(presentOptionsVC), for: .touchUpInside)
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(customView: optionsButton)
     }

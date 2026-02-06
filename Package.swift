@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.10
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -6,7 +6,8 @@ import PackageDescription
 let package = Package(
     name: "JZCalendarWeekView",
     platforms: [
-        .iOS(.v13)
+        .iOS(.v17),
+        .macCatalyst(.v17)
     ],
     products: [
         // Products define the executables and libraries produced by a package, and make them visible to other packages.
@@ -28,14 +29,6 @@ let package = Package(
             exclude: [
                 "../Example",
                 "Info.plist",
-            ]),
-//        .target(
-//            name: "JZCalendarWeekViewExample",
-//            dependencies: ["JZCalendarWeekView"],
-//            path: "Example"),
-//        .testTarget(
-//            name: "JZCalendarWeekViewTests",
-//            dependencies: ["JZCalendarWeekView"],
-//            path: "Tests")
+            ])
     ]
 )
