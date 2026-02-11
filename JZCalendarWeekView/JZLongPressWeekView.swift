@@ -1331,7 +1331,7 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
         case .ended where isAvailableForMoving:
             shortPressView?.removeFromSuperview()
             if let shortPressViewStartDate {
-                let column = getCurrentColumn(pointInSelfView: pointInSelfView)
+                let column = getCurrentColumn(pointInCollectionView: pointInCollectionView)
                 let insideParkingLotArea = parkingCornerView != nil
                 switch currentPressType {
                 case .addNew:
@@ -1395,21 +1395,19 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
         }
     }
     
-    private func getCurrentColumn(pointInSelfView: CGPoint) -> Int {
-        var column: Int = 0
-        let pointX = pointInSelfView.x - flowLayout.rowHeaderWidth - flowLayout.contentsMargin.left
-        if numOfResources > 1 {
-            let originalWidth = widthInColumn
-            for idx in 0..<numOfResources {
-                let sectionX1 = CGFloat(idx) * originalWidth
-                let sectionX2 = sectionX1 + originalWidth
-                if sectionX1...sectionX2 ~= pointX {
-                    column = idx
-                    break
-                }
-            }
-        }
-        return column
+    private func getCurrentColumn(pointInCollectionView: CGPoint) -> Int {
+        guard numOfResources > 1 else { return 0 }
+
+        let adjustedX = pointInCollectionView.x - flowLayout.rowHeaderWidth - flowLayout.contentsMargin.left
+        let sectionWidth = flowLayout.sectionWidth ?? 0
+        let subsectionWidth = flowLayout.subsectionWidth ?? widthInColumn
+        guard sectionWidth > 0, subsectionWidth > 0 else { return 0 }
+
+        let normalizedX = adjustedX >= 0
+        ? adjustedX.truncatingRemainder(dividingBy: sectionWidth)
+        : 0
+        let rawColumn = Int(normalizedX / subsectionWidth)
+        return min(max(rawColumn, 0), numOfResources - 1)
     }
 
     /// used by handleShortPressGesture only
@@ -1459,8 +1457,8 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
             timeMinInterval: durationMinutes
         )
         let endDate = startDate.addingTimeInterval(flowLayout.currentZoom.durationPlaceholder)
-        let column = getCurrentColumn(pointInSelfView: pointInSelfView)
-        
+        let column = getCurrentColumn(pointInCollectionView: pointInCollectionView)
+
         longPressDelegate?.weekView(self, didSingleTap: gesture, startDate: startDate, endDate: endDate, in: column)
     }
     
@@ -1478,8 +1476,8 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
             timeMinInterval: durationMinutes
         )
         let endDate = startDate.addingTimeInterval(flowLayout.currentZoom.durationPlaceholder)
-        let column = getCurrentColumn(pointInSelfView: pointInSelfView)
-        
+        let column = getCurrentColumn(pointInCollectionView: pointInCollectionView)
+
         longPressDelegate?.weekView(self, didDoubleTap: gesture, startDate: startDate, endDate: endDate, in: column)
     }
     
@@ -1542,7 +1540,7 @@ extension JZLongPressWeekView: UIDropInteractionDelegate {
         pressTimeLabel.removeFromSuperview()
         _ = session.loadObjects(ofClass: String.self) { [weak self] items in
             if let self, let dropId = items.first {
-                let column = getCurrentColumn(pointInSelfView: pointInSelfView)
+                let column = getCurrentColumn(pointInCollectionView: dropLocation)
                 DispatchQueue.main.async { [weak self] in
                     self?.longPressDelegate?.weekView(
                         dropId: dropId,
