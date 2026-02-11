@@ -1394,19 +1394,25 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
             currentEditingInfo.event = nil
         }
     }
-    
+
     private func getCurrentColumn(pointInCollectionView: CGPoint) -> Int {
         guard numOfResources > 1 else { return 0 }
 
+        // get "clear" X position exlcude margin and header.
         let adjustedX = pointInCollectionView.x - flowLayout.rowHeaderWidth - flowLayout.contentsMargin.left
-        let sectionWidth = flowLayout.sectionWidth ?? 0
-        let subsectionWidth = flowLayout.subsectionWidth ?? widthInColumn
-        guard sectionWidth > 0, subsectionWidth > 0 else { return 0 }
 
-        let normalizedX = adjustedX >= 0
-        ? adjustedX.truncatingRemainder(dividingBy: sectionWidth)
-        : 0
+        let sectionWidth = flowLayout.sectionWidth ?? 0
+        //get subsection width(widthInColumn is equal subsectionWidth, in fact)
+        let subsectionWidth = flowLayout.subsectionWidth ?? widthInColumn
+        guard sectionWidth > 0,
+              subsectionWidth > 0 else { return 0 }
+
+
+        // get X for day position related to section width(formally point on the view)
+        let normalizedX = adjustedX >= 0 ? adjustedX.truncatingRemainder(dividingBy: sectionWidth) : 0
+        // get raw column based on normalized position
         let rawColumn = Int(normalizedX / subsectionWidth)
+        // get mininum value between calculated row an rows amount
         return min(max(rawColumn, 0), numOfResources - 1)
     }
 

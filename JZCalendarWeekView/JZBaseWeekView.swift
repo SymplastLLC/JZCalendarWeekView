@@ -119,7 +119,7 @@ open class JZBaseWeekView: UIView {
     }
     public var widthInColumn: CGFloat {
         if numOfResources > 1 {
-            flowLayout.subsectionWidth
+            contentViewWidth / CGFloat(numOfResources)
         } else {
             flowLayout.sectionWidth
         }
