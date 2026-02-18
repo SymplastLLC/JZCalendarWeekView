@@ -318,6 +318,7 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
     /// The moving cell contentView layer opacity (when you move the existing cell, the previous cell will be translucent)
     /// If your cell background alpha below this value, you should decrease this value as well
     public var movingCellOpacity: Float = 0.6
+    private var isDragActive: Bool = false
     
     public var dragPreviewSize: CGSize = .zero
     
@@ -488,6 +489,10 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
             scrollingTo(direction: .down)
             return
         }
+
+        // During active drag, allow horizontal auto-scroll only when there are multiple resources/providers.
+        // This keeps date paging blocked while still letting users move between provider columns.
+        guard !isDragActive || numOfResources > 1 else { return }
         // horizontal
         if pointInSelfView.x < longPressLeftMarginX + 10 {
             isScrolling = true
@@ -527,12 +532,30 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
             }
         } else {
             var contentOffsetX: CGFloat
-            switch scrollType {
-            case .sectionScroll:
-                let scrollSections: CGFloat = direction == .left ? 1 : -1
-                contentOffsetX = currentOffset.x - flowLayout.sectionWidth! * scrollSections
-            case .pageScroll:
-                contentOffsetX = direction == .left ? 0 : contentViewWidth * 2
+            if isDragActive && numOfResources > 1 {
+                let providerStep = flowLayout.subsectionWidth ?? widthInColumn
+                let step = direction == .left ? providerStep : -providerStep
+                contentOffsetX = currentOffset.x + step
+
+                // Keep drag-based provider scrolling inside the current day section.
+                if let sectionWidth = flowLayout.sectionWidth {
+                    let sectionIndex = floor(currentOffset.x / sectionWidth)
+                    let sectionStartX = sectionWidth * sectionIndex
+                    let visibleCalendarWidth = collectionView.bounds.width
+                        - flowLayout.rowHeaderWidth
+                        - flowLayout.contentsMargin.left
+                        - flowLayout.contentsMargin.right
+                    let sectionEndX = max(sectionStartX, sectionStartX + sectionWidth - visibleCalendarWidth)
+                    contentOffsetX = min(max(contentOffsetX, sectionStartX), sectionEndX)
+                }
+            } else {
+                switch scrollType {
+                case .sectionScroll:
+                    let scrollSections: CGFloat = direction == .left ? 1 : -1
+                    contentOffsetX = currentOffset.x - flowLayout.sectionWidth! * scrollSections
+                case .pageScroll:
+                    contentOffsetX = direction == .left ? 0 : contentViewWidth * 2
+                }
             }
             // Take the horizontal scrollable edges into account
             let contentOffsetXWithScrollableEdges = min(max(contentOffsetX, scrollableEdges.leftX ?? -1), scrollableEdges.rightX ?? CGFloat.greatestFiniteMagnitude)
@@ -635,6 +658,14 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
 
     /// Overload for base class with left and right margin check for LongPress
     open func getDateForPointX(xCollectionView: CGFloat, xSelfView: CGFloat) -> Date {
+        if isDragActive {
+            // Prevent dropping/moving into previous/next date when pointer is in fixed timeline/header margins.
+            let minDragX = collectionView.contentOffset.x + flowLayout.rowHeaderWidth + flowLayout.contentsMargin.left + 0.1
+            let maxDragX = minDragX + max(contentViewWidth - 0.2, 0)
+            let clampedX = min(max(xCollectionView, minDragX), maxDragX)
+            return getDateForPointX(clampedX)
+        }
+
         let date = getDateForPointX(xCollectionView)
         guard !isResizingPressRecognized else { return date }
         // when isScrolling equals true, means it will scroll to previous date
@@ -660,6 +691,10 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
     // Only being called when setContentOffset ends animition by scrollingTo method
     // scrollViewDidEndScrollingAnimation won't be called in JZBaseWeekView, then should load page here
     open func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
+        if isDragActive {
+            isScrolling = false
+            return
+        }
         // vertical scroll should not load page, handled in loadPage method
         loadPage()
         isScrolling = false
@@ -768,6 +803,7 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
     }
     
     private func resetDataForShortPress() {
+        isDragActive = false
         currentPressType = .move
         coverViewForMoving.removeFromSuperview()
         collectionView.isScrollEnabled = true
@@ -782,6 +818,7 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
     }
     
     private func resetDataForLongPress() {
+        isDragActive = false
         isResizingPressRecognized = false
         currentPressType = .move
         currentEditingInfo.resizeEvent = nil
@@ -1199,6 +1236,7 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
         
         switch state {
         case .began:
+            isDragActive = true
             parkingLotFeedback.prepare()
             switch currentPressType {
             case .addNew:
@@ -1375,6 +1413,7 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
         }
         
         guard isAvailableForMoving else {
+            isDragActive = false
             isShortPressing = false
             pressPosition = nil
             return
@@ -1397,6 +1436,21 @@ open class JZLongPressWeekView: JZBaseWeekView, UIGestureRecognizerDelegate {
 
     private func getCurrentColumn(pointInCollectionView: CGPoint) -> Int {
         guard numOfResources > 1 else { return 0 }
+
+        if isDragActive {
+            let firstVisibleProviderX = collectionView.contentOffset.x + flowLayout.rowHeaderWidth + flowLayout.contentsMargin.left
+            if pointInCollectionView.x <= firstVisibleProviderX {
+                let sectionWidth = flowLayout.sectionWidth ?? 0
+                let subsectionWidth = flowLayout.subsectionWidth ?? widthInColumn
+                guard sectionWidth > 0, subsectionWidth > 0 else { return 0 }
+
+                // Use section-local content offset to get the first visible provider in the current day section.
+                let adjustedVisibleX = max(0, collectionView.contentOffset.x)
+                let sectionOffsetX = adjustedVisibleX.truncatingRemainder(dividingBy: sectionWidth)
+                let firstVisibleProvider = Int(sectionOffsetX / subsectionWidth)
+                return min(max(firstVisibleProvider, 0), numOfResources - 1)
+            }
+        }
 
         // get "clear" X position exlcude margin and header.
         let adjustedX = pointInCollectionView.x - flowLayout.rowHeaderWidth - flowLayout.contentsMargin.left
@@ -1543,6 +1597,7 @@ extension JZLongPressWeekView: UIDropInteractionDelegate {
             pointInSelfView: pointInSelfView,
             magicYOffset: magicDropYOffset
         )
+        isDragActive = false
         pressTimeLabel.removeFromSuperview()
         _ = session.loadObjects(ofClass: String.self) { [weak self] items in
             if let self, let dropId = items.first {
@@ -1559,6 +1614,7 @@ extension JZLongPressWeekView: UIDropInteractionDelegate {
     }
     
     public func dropInteraction(_ interaction: UIDropInteraction, sessionDidEnter session: UIDropSession) {
+        isDragActive = true
         let dropLocation = session.location(in: collectionView)
         let labelHeight: CGFloat = 20
         let timeLabelWidth = UILabel.getLabelWidth(labelHeight, font: pressTimeLabel.font, text: "23:59 PM")
@@ -1572,10 +1628,12 @@ extension JZLongPressWeekView: UIDropInteractionDelegate {
     }
     
     public func dropInteraction(_ interaction: UIDropInteraction, sessionDidEnd session: UIDropSession) {
+        isDragActive = false
         pressTimeLabel.removeFromSuperview()
     }
     
     public func dropInteraction(_ interaction: UIDropInteraction, sessionDidExit session: UIDropSession) {
+        isDragActive = false
         pressTimeLabel.removeFromSuperview()
     }
 }
