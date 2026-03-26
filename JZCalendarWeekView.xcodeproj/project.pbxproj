@@ -45,6 +45,7 @@
 		F9561541283E3E230005DD6F /* JZStyleLayoutAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9561540283E3E230005DD6F /* JZStyleLayoutAttributes.swift */; };
 		F9561543283E3E540005DD6F /* JZTemplatesLayoutAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9561542283E3E540005DD6F /* JZTemplatesLayoutAttributes.swift */; };
 		F9BC40582844E61C0060A33F /* JZCalendarModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9BC40572844E61C0060A33F /* JZCalendarModel.swift */; };
+		F9C0BF1C2F755DA90055516E /* JZWeekViewFlowLayoutOverlapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9C0BF1B2F755DA90055516E /* JZWeekViewFlowLayoutOverlapTests.swift */; };
 		F9EB00F32B9DBB9E00F59ADD /* JZTopHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9EB00F22B9DBB9E00F59ADD /* JZTopHeaderView.swift */; };
 /* End PBXBuildFile section */
 
@@ -99,6 +100,7 @@
 		F9561540283E3E230005DD6F /* JZStyleLayoutAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JZStyleLayoutAttributes.swift; sourceTree = "<group>"; };
 		F9561542283E3E540005DD6F /* JZTemplatesLayoutAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JZTemplatesLayoutAttributes.swift; sourceTree = "<group>"; };
 		F9BC40572844E61C0060A33F /* JZCalendarModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JZCalendarModel.swift; sourceTree = "<group>"; };
+		F9C0BF1B2F755DA90055516E /* JZWeekViewFlowLayoutOverlapTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JZWeekViewFlowLayoutOverlapTests.swift; sourceTree = "<group>"; };
 		F9EB00F22B9DBB9E00F59ADD /* JZTopHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JZTopHeaderView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -131,6 +133,7 @@
 				1F2F29B822959C1E004B7CA1 /* Helpers.swift */,
 				1F2F29B622959B6C004B7CA1 /* Constants.swift */,
 				8E023C79206C6E4B00C523BE /* Info.plist */,
+				F9C0BF1B2F755DA90055516E /* JZWeekViewFlowLayoutOverlapTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -355,6 +358,7 @@
 				8E023C78206C6E4B00C523BE /* JZLongPressWeekViewTests.swift in Sources */,
 				1F2F29B522959B16004B7CA1 /* JZBaseWeekViewTests.swift in Sources */,
 				1F2F29B922959C1E004B7CA1 /* Helpers.swift in Sources */,
+				F9C0BF1C2F755DA90055516E /* JZWeekViewFlowLayoutOverlapTests.swift in Sources */,
 				1F2F29B722959B6C004B7CA1 /* Constants.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -69,10 +69,10 @@ class JZLongPressWeekViewTests: XCTestCase {
         let testDate = Helpers.testDate
         longPressView.setupCalendar(numOfDays: 3, setDate: testDate, allEvents: [:])
         let baseY = longPressView.flowLayout.contentsMargin.top + longPressView.flowLayout.columnHeaderHeight + longPressView.flowLayout.allDayHeaderHeight
-        longPressView.collectionView.contentSize.height = baseY + longPressView.flowLayout.hourHeight * 24 + longPressView.flowLayout.contentsMargin.bottom
+        longPressView.collectionView.contentSize.height = baseY + longPressView.flowLayout.hourHeightForZoomLevel * 24 + longPressView.flowLayout.contentsMargin.bottom
 
         let pointCollectionView = CGPoint(x: longPressView.flowLayout.sectionWidth * 3 + longPressView.flowLayout.rowHeaderWidth,
-                                          y: baseY + longPressView.flowLayout.hourHeight * 1.5)
+                                          y: baseY + longPressView.flowLayout.hourHeightForZoomLevel * 1.5)
         let pointSelfView = CGPoint(x: longPressView.longPressLeftMarginX - 1, y: 0)
         XCTAssertEqual(longPressView.getDateForPoint(pointCollectionView: pointCollectionView, pointSelfView: pointSelfView),
                        Date().set(year: 2019, month: 5, day: 23, hour: 1, minute: 30, second: 0).add(component: .day, value: 1))

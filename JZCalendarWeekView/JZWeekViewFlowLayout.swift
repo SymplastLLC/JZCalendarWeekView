@@ -915,7 +915,15 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
         let (maxOverlapIntervalCount, overlapGroups) = groupOverlapItems(items: sectionItemAttributes.filter { $0.resourceIndex == resourceIdx })
         guard maxOverlapIntervalCount > 1 else { return }
         
-        let sortedOverlapGroups = overlapGroups.sorted { $0.count > $1.count }
+        // Make group ordering deterministic when two groups have equal overlap size.
+        // Without this tie-break, equal-size groups can be processed in different order
+        // between runs, which may lead to unstable X placement.
+        let sortedOverlapGroups = overlapGroups.sorted {
+            if $0.count != $1.count {
+                return $0.count > $1.count
+            }
+            return $0.first?.frame.minY ?? .greatestFiniteMagnitude < $1.first?.frame.minY ?? .greatestFiniteMagnitude
+        }
         var adjustedItems: Set<UICollectionViewLayoutAttributes> = []
         var sectionZ = currentSectionZ
         
@@ -929,8 +937,33 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
             adjustedItems: &adjustedItems
         )
         
-        for index in 1..<sortedOverlapGroups.count {
-            let group = sortedOverlapGroups[index]
+        // Process remaining groups by dependency on already adjusted items.
+        // Groups that intersect already-placed items must be handled first,
+        // otherwise they may be spread across full width and overlap existing frames.
+        var unprocessedGroups = Array(sortedOverlapGroups.dropFirst())
+        while !unprocessedGroups.isEmpty {
+            let nextGroupIndex = unprocessedGroups.indices.max { lhs, rhs in
+                // Prefer the group with more already-adjusted members:
+                // it has stricter placement constraints and should be resolved first.
+                let lhsAdjustedCount = unprocessedGroups[lhs].reduce(into: 0) { partialResult, item in
+                    if adjustedItems.contains(item) { partialResult += 1 }
+                }
+                let rhsAdjustedCount = unprocessedGroups[rhs].reduce(into: 0) { partialResult, item in
+                    if adjustedItems.contains(item) { partialResult += 1 }
+                }
+
+                if lhsAdjustedCount != rhsAdjustedCount {
+                    return lhsAdjustedCount < rhsAdjustedCount
+                }
+                if unprocessedGroups[lhs].count != unprocessedGroups[rhs].count {
+                    return unprocessedGroups[lhs].count < unprocessedGroups[rhs].count
+                }
+
+                let lhsMinY = unprocessedGroups[lhs].first?.frame.minY ?? .greatestFiniteMagnitude
+                let rhsMinY = unprocessedGroups[rhs].first?.frame.minY ?? .greatestFiniteMagnitude
+                return lhsMinY > rhsMinY
+            } ?? unprocessedGroups.startIndex
+            let group = unprocessedGroups.remove(at: nextGroupIndex)
             var unadjustedItems = [UICollectionViewLayoutAttributes]()
             // unavailable area and already sorted
             var adjustedRanges = [ClosedRange<CGFloat>]()
@@ -947,7 +980,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
                 continue
             }
             guard unadjustedItems.count > 0 else { continue }
-            
+
             let availableRanges = getAvailableRanges(sectionRange: sectionMinX...sectionMinX + sectionWidth, adjustedRanges: adjustedRanges)
             let minItemDivisionWidth = (sectionWidth / CGFloat(largestOverlapCountGroup.count)).toDecimal1Value()
             var i = 0, j = 0
@@ -1061,8 +1094,26 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     /// - Returns: maxOverlapIntervalCount and all the maximum overlap groups
     func groupOverlapItems(items: [UICollectionViewLayoutAttributes]) -> (maxOverlapIntervalCount: Int, overlapGroups: [[UICollectionViewLayoutAttributes]]) {
         var maxOverlap = 0, currentOverlap = 0
-        let sortedMinYItems = items.sorted { $0.frame.minY < $1.frame.minY }
-        let sortedMaxYItems = items.sorted { $0.frame.maxY < $1.frame.maxY }
+        // Stable sorts are required for deterministic overlap grouping.
+        // We compare by the primary axis first and then apply tie-breakers.
+        let sortedMinYItems = items.sorted {
+            if $0.frame.minY != $1.frame.minY {
+                return $0.frame.minY < $1.frame.minY
+            }
+            if $0.frame.maxY != $1.frame.maxY {
+                return $0.frame.maxY < $1.frame.maxY
+            }
+            return isEarlierIndexPath($0.indexPath, than: $1.indexPath)
+        }
+        let sortedMaxYItems = items.sorted {
+            if $0.frame.maxY != $1.frame.maxY {
+                return $0.frame.maxY < $1.frame.maxY
+            }
+            if $0.frame.minY != $1.frame.minY {
+                return $0.frame.minY < $1.frame.minY
+            }
+            return isEarlierIndexPath($0.indexPath, than: $1.indexPath)
+        }
         let itemCount = items.count
         
         var i = 0, j = 0
@@ -1090,6 +1141,13 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
         // Add last currentOverlapGroup
         if currentOverlapGroup.count > 1 { overlapGroups.append(currentOverlapGroup) }
         return (maxOverlap, overlapGroups)
+    }
+
+    /// Deterministic final tie-break for frame-equal items.
+    /// Keeps ordering stable across runs and devices.
+    private func isEarlierIndexPath(_ lhs: IndexPath, than rhs: IndexPath) -> Bool {
+        if lhs.section != rhs.section { return lhs.section < rhs.section }
+        return lhs.item < rhs.item
     }
     
     func invalidateLayoutCache() {

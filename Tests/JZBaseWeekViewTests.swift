@@ -93,7 +93,7 @@ class JZBaseWeekViewTests: XCTestCase {
         let startTime = baseWeekView.getDateForContentOffsetY(contentOffsetY)
         XCTAssertTrue(startTime == (0, 1))
 
-        contentOffsetY = baseWeekView.flowLayout.hourHeight * 1.5 + baseWeekView.flowLayout.contentsMargin.top
+        contentOffsetY = baseWeekView.flowLayout.hourHeightForZoomLevel * 1.5 + baseWeekView.flowLayout.contentsMargin.top
         let time1Hour30Mins = baseWeekView.getDateForContentOffsetY(contentOffsetY)
         XCTAssertTrue(time1Hour30Mins == (1, 30))
     }
@@ -101,7 +101,7 @@ class JZBaseWeekViewTests: XCTestCase {
     func testGetDateForContentOffset() {
         let testDate = Helpers.testDate
         baseWeekView.setupCalendar(numOfDays: 3, setDate: testDate, allEvents: [:])
-        let contentOffset = CGPoint(x: baseWeekView.flowLayout.sectionWidth * 3, y: baseWeekView.flowLayout.hourHeight * 1.5 + baseWeekView.flowLayout.contentsMargin.top)
+        let contentOffset = CGPoint(x: baseWeekView.flowLayout.sectionWidth * 3, y: baseWeekView.flowLayout.hourHeightForZoomLevel * 1.5 + baseWeekView.flowLayout.contentsMargin.top)
         XCTAssertEqual(baseWeekView.getDateForContentOffset(contentOffset), Date().set(year: 2019, month: 5, day: 23, hour: 1, minute: 30, second: 0))
     }
 
@@ -125,7 +125,7 @@ class JZBaseWeekViewTests: XCTestCase {
         var pointY: CGFloat
         let baseY = baseWeekView.flowLayout.contentsMargin.top + baseWeekView.flowLayout.columnHeaderHeight + baseWeekView.flowLayout.allDayHeaderHeight
         // should set contentSize height, otherwise getDateForPointY cannot work properly
-        baseWeekView.collectionView.contentSize.height = baseY + baseWeekView.flowLayout.hourHeight * 24 + baseWeekView.flowLayout.contentsMargin.bottom
+        baseWeekView.collectionView.contentSize.height = baseY + baseWeekView.flowLayout.hourHeightForZoomLevel * 24 + baseWeekView.flowLayout.contentsMargin.bottom
 
         // default contentsMargin top is 10
         pointY = baseY
@@ -136,17 +136,17 @@ class JZBaseWeekViewTests: XCTestCase {
         let startTime = baseWeekView.getDateForPointY(pointY)
         XCTAssertTrue(startTime == (0, 1))
 
-        pointY = baseY + baseWeekView.flowLayout.hourHeight * 1.5
+        pointY = baseY + baseWeekView.flowLayout.hourHeightForZoomLevel * 1.5
         let time1Hour30Mins = baseWeekView.getDateForPointY(pointY)
         XCTAssertTrue(time1Hour30Mins == (1, 30))
 
         // maxY - 0.5 (1 will be rounded to 58 mins)
-        pointY = baseY + baseWeekView.flowLayout.hourHeight * 24 - 0.5
+        pointY = baseY + baseWeekView.flowLayout.hourHeightForZoomLevel * 24 - 0.5
         let endTime = baseWeekView.getDateForPointY(pointY)
         XCTAssertTrue(endTime == (23, 59))
 
         // maxY + 1
-        pointY = baseY + baseWeekView.flowLayout.hourHeight * 24 + 1
+        pointY = baseY + baseWeekView.flowLayout.hourHeightForZoomLevel * 24 + 1
         let endTimeOver24 = baseWeekView.getDateForPointY(pointY)
         XCTAssertTrue(endTimeOver24 == (24, 00))
     }
@@ -155,10 +155,10 @@ class JZBaseWeekViewTests: XCTestCase {
         let testDate = Helpers.testDate
         baseWeekView.setupCalendar(numOfDays: 3, setDate: testDate, allEvents: [:])
         let baseY = baseWeekView.flowLayout.contentsMargin.top + baseWeekView.flowLayout.columnHeaderHeight + baseWeekView.flowLayout.allDayHeaderHeight
-        baseWeekView.collectionView.contentSize.height = baseY + baseWeekView.flowLayout.hourHeight * 24 + baseWeekView.flowLayout.contentsMargin.bottom
+        baseWeekView.collectionView.contentSize.height = baseY + baseWeekView.flowLayout.hourHeightForZoomLevel * 24 + baseWeekView.flowLayout.contentsMargin.bottom
 
         let point = CGPoint(x: baseWeekView.flowLayout.sectionWidth * 3 + baseWeekView.flowLayout.rowHeaderWidth,
-                            y: baseY + baseWeekView.flowLayout.hourHeight * 1.5)
+                            y: baseY + baseWeekView.flowLayout.hourHeightForZoomLevel * 1.5)
         XCTAssertEqual(baseWeekView.getDateForPoint(point), Date().set(year: 2019, month: 5, day: 23, hour: 1, minute: 30, second: 0))
     }
 
