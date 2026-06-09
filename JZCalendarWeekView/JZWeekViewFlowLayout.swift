@@ -926,9 +926,9 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
         }
         var adjustedItems: Set<UICollectionViewLayoutAttributes> = []
         var sectionZ = currentSectionZ
-        
+
         // First draw the largest overlap items layout (only this case itemWidth is fixed and always at the right position)
-        let largestOverlapCountGroup = sortedOverlapGroups[0]
+        guard let largestOverlapCountGroup = sortedOverlapGroups.first else { return }
         setItemsAdjustedAttributes(
             fullWidth: sectionWidth,
             items: largestOverlapCountGroup,
@@ -981,8 +981,10 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
             }
             guard unadjustedItems.count > 0 else { continue }
 
+            guard sectionWidth > 0 else { continue }
             let availableRanges = getAvailableRanges(sectionRange: sectionMinX...sectionMinX + sectionWidth, adjustedRanges: adjustedRanges)
             let minItemDivisionWidth = (sectionWidth / CGFloat(largestOverlapCountGroup.count)).toDecimal1Value()
+            guard minItemDivisionWidth > 0 else { continue }
             var i = 0, j = 0
             while i < unadjustedItems.count && j < availableRanges.count {
                 let availableRange = availableRanges[j]
@@ -993,10 +995,13 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
                     // All left unadjusted items can evenly divide the current available area
                     setItemsAdjustedAttributes(fullWidth: availableWidth, items: Array(unadjustedItems[i..<unadjustedItems.count]), currentMinX: availableRange.lowerBound, sectionZ: &sectionZ, adjustedItems: &adjustedItems)
                     break
-                } else {
+                } else if availableMaxItemsCount > 0 {
                     // This current available interval cannot afford all left unadjusted items
                     setItemsAdjustedAttributes(fullWidth: availableWidth, items: Array(unadjustedItems[i..<i+availableMaxItemsCount]), currentMinX: availableRange.lowerBound, sectionZ: &sectionZ, adjustedItems: &adjustedItems)
                     i += availableMaxItemsCount
+                    j += 1
+                } else {
+                    // availableWidth too narrow for even one item slot — skip this range
                     j += 1
                 }
             }
@@ -1031,11 +1036,14 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
                 availableRanges += currentAvailableRanges
             } else {
                 if adjustedRange.upperBound > lastAvailableRange.lowerBound {
-                    let availableRange = adjustedRange.upperBound...lastAvailableRange.upperBound
                     availableRanges.removeLast()
-                    availableRanges.append(availableRange)
+                    if adjustedRange.upperBound < lastAvailableRange.upperBound {
+                        let availableRange = adjustedRange.upperBound...lastAvailableRange.upperBound
+                        availableRanges.append(availableRange)
+                    }
+                    // else: adjusted range fully covers the last available range, so nothing remains
                 } else {
-                    // if false, means this adjustedRange is included in last adjustedRange, like (3, 7) & (5, 7) no need to do anything
+                    // adjustedRange is included in a previously adjusted range, like (3, 7) & (5, 7) — no action needed
                 }
             }
         }
