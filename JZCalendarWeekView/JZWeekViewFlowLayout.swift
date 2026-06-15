@@ -1029,8 +1029,12 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
                 } else {
                     // Adjusted range is in middle of the last available range
                     let leftAvailableRange = lastAvailableRange.lowerBound...adjustedRange.lowerBound
-                    let rightAvailableRange = adjustedRange.upperBound...lastAvailableRange.upperBound
-                    currentAvailableRanges = [leftAvailableRange, rightAvailableRange]
+                    currentAvailableRanges.append(leftAvailableRange)
+                    // Guard against floating-point precision edge cases where bounds can be inverted
+                    if adjustedRange.upperBound < lastAvailableRange.upperBound {
+                        let rightAvailableRange = adjustedRange.upperBound...lastAvailableRange.upperBound
+                        currentAvailableRanges.append(rightAvailableRange)
+                    }
                 }
                 availableRanges.removeLast()
                 availableRanges += currentAvailableRanges
