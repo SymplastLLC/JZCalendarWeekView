@@ -601,7 +601,6 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     
     // MARK: - Layout
     override open func layoutAttributesForItem(at indexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
-        super.layoutAttributesForItem(at: indexPath)
         // MARK: - Layout
         let attrs = itemAttributes[indexPath]
         if attrs == nil {
@@ -626,7 +625,6 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     }
     
         override open func layoutAttributesForSupplementaryView(ofKind elementKind: String, at indexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
-            super.layoutAttributesForSupplementaryView(ofKind: elementKind, at: indexPath)
             return switch elementKind {
             case JZSupplementaryViewKinds.columnHeader:
                 columnHeaderAttributes[indexPath]
@@ -937,6 +935,9 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
             adjustedItems: &adjustedItems
         )
         
+        let minItemDivisionWidth = (sectionWidth / CGFloat(largestOverlapCountGroup.count)).toDecimal1Value()
+        guard minItemDivisionWidth > 0 else { return }
+
         // Process remaining groups by dependency on already adjusted items.
         // Groups that intersect already-placed items must be handled first,
         // otherwise they may be spread across full width and overlap existing frames.
@@ -981,10 +982,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
             }
             guard unadjustedItems.count > 0 else { continue }
 
-            guard sectionWidth > 0 else { continue }
             let availableRanges = getAvailableRanges(sectionRange: sectionMinX...sectionMinX + sectionWidth, adjustedRanges: adjustedRanges)
-            let minItemDivisionWidth = (sectionWidth / CGFloat(largestOverlapCountGroup.count)).toDecimal1Value()
-            guard minItemDivisionWidth > 0 else { continue }
             var i = 0, j = 0
             while i < unadjustedItems.count && j < availableRanges.count {
                 let availableRange = availableRanges[j]
@@ -993,7 +991,7 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
                 let leftUnadjustedItemsCount = unadjustedItems.count - i
                 if leftUnadjustedItemsCount <= availableMaxItemsCount {
                     // All left unadjusted items can evenly divide the current available area
-                    setItemsAdjustedAttributes(fullWidth: availableWidth, items: Array(unadjustedItems[i..<unadjustedItems.count]), currentMinX: availableRange.lowerBound, sectionZ: &sectionZ, adjustedItems: &adjustedItems)
+                    setItemsAdjustedAttributes(fullWidth: availableWidth, items: Array(unadjustedItems[i...]), currentMinX: availableRange.lowerBound, sectionZ: &sectionZ, adjustedItems: &adjustedItems)
                     break
                 } else if availableMaxItemsCount > 0 {
                     // This current available interval cannot afford all left unadjusted items
