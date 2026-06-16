@@ -936,7 +936,6 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
         )
         
         let minItemDivisionWidth = (sectionWidth / CGFloat(largestOverlapCountGroup.count)).toDecimal1Value()
-        guard minItemDivisionWidth > 0 else { return }
 
         // Process remaining groups by dependency on already adjusted items.
         // Groups that intersect already-placed items must be handled first,
@@ -981,6 +980,8 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
                 continue
             }
             guard unadjustedItems.count > 0 else { continue }
+            // minItemDivisionWidth is used for division below; skip if it rounded to zero
+            guard minItemDivisionWidth > 0 else { continue }
 
             let availableRanges = getAvailableRanges(sectionRange: sectionMinX...sectionMinX + sectionWidth, adjustedRanges: adjustedRanges)
             var i = 0, j = 0
