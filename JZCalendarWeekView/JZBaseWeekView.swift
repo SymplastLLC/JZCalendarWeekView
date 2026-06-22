@@ -199,7 +199,16 @@ open class JZBaseWeekView: UIView {
     /// In order to make sure the width of all sections is the same, add few points to CGFloat
     private func getSectionWidth() -> CGFloat {
         let value = CGFloat(max(numOfDays, 1))
-        var sectionWidth = contentViewWidth / value
+        // When horizontal scroll isn't restricted, contentViewWidth uses flowLayout.rowHeaderWidth
+        // which this function itself writes — creating a feedback loop that causes rowHeaderWidth
+        // to accumulate rounding drift across repeated layoutSubviews calls (e.g. macOS live-resize).
+        // Use defaultRowHeaderWidth as a stable, non-drifting base instead.
+        // In the restricted path, contentViewWidth already equals minWidth * numOfResources
+        // independently of rowHeaderWidth, so no drift occurs there.
+        let baseContentWidth = isNeedRestrictHorizontalScroll
+            ? contentViewWidth
+            : frameWidth - flowLayout.defaultRowHeaderWidth - flowLayout.contentsMargin.left - flowLayout.contentsMargin.right
+        var sectionWidth = baseContentWidth / value
         let remainder = sectionWidth.truncatingRemainder(dividingBy: 1)
         switch remainder {
         case 0...0.25:
