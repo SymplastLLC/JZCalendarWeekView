@@ -894,13 +894,39 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
     }
     
     /**
-     New method to adjust items layout for overlap
-     
-     Known existing issues:
-     1. If some events have the same overlap count as others and at the same time, those events are not adjusted yet, then this method will calculate and divide them evenly in the section.
-     However, there might be some cases, in very complicated situation, those same overlap count groups might exist already adjusted item overlapping with one of current group items, which
-     means the order is wrong.
-     2. Efficiency issue for getAvailableRanges and the rest of the code in this method
+     Adjust items layout to resolve time overlap within a resource column, using classic
+     interval-graph column packing (the "meeting rooms" algorithm) applied per connected
+     overlap cluster.
+
+     Items are first sorted deterministically (by frame.minY, then frame.maxY, then indexPath),
+     then partitioned into connected overlap clusters: an item joins the current cluster if it
+     starts before the latest end time seen so far in that cluster, i.e. transitive/chain overlap,
+     not just pairwise overlap with the previous item. Within a cluster, each item (in that sorted
+     order) is greedily assigned the lowest-numbered column whose last occupant already ended by
+     the time this item starts; otherwise it opens a new column. The number of columns a cluster
+     ends up using always equals that cluster's true maximum overlap.
+
+     This guarantees, by construction:
+     - every item is placed (no leftover full-width item silently painted under the narrower,
+       higher-zIndex ones — FIRE-336),
+     - two items that overlap in time never intersect horizontally.
+
+     A cluster containing a single (non-overlapping) item is left at its original full-width frame.
+
+     After column assignment, each item is expanded rightward only (Google-Calendar style): its
+     column span grows through every immediately-following column that contains no item
+     overlapping it in time, stopping at the first column that does (or at the cluster's
+     column count) — an item can never reclaim a free column numbered lower than its own, only
+     widen into higher-numbered ones. Without this pass, one long event pulls the whole cluster
+     into a single column count and narrows every item in it to 1/columnCount width, even at
+     times when nothing else in the cluster is actually scheduled — a visible regression against
+     the pre-fix layout. Because expansion only ever grows into columns free of time-overlap, the
+     non-intersection invariant still holds: if two items A (column a) and B (column b > a)
+     overlap in time, column b contains an item overlapping A (namely B), so A's expansion
+     walk stopped at or before column b — A's span therefore ends at or before B's x origin
+     (exact only modulo the 0.1pt `toDecimal1Value()` origin rounding; and since `itemMargin` is
+     an `open var` a consumer could set to zero, an expanded item could then overlap its blocker
+     by up to that same 0.1pt).
      */
     open func adjustItemsForOverlap(
         _ sectionItemAttributes: [UICollectionViewLayoutAttributesResource],
@@ -910,248 +936,101 @@ open class JZWeekViewFlowLayout: UICollectionViewFlowLayout {
         resourceIdx: Int = 0,
         sectionWidth: CGFloat
     ) {
-        let (maxOverlapIntervalCount, overlapGroups) = groupOverlapItems(items: sectionItemAttributes.filter { $0.resourceIndex == resourceIdx })
-        guard maxOverlapIntervalCount > 1 else { return }
-        
-        // Make group ordering deterministic when two groups have equal overlap size.
-        // Without this tie-break, equal-size groups can be processed in different order
-        // between runs, which may lead to unstable X placement.
-        let sortedOverlapGroups = overlapGroups.sorted {
-            if $0.count != $1.count {
-                return $0.count > $1.count
+        let items: [UICollectionViewLayoutAttributes] = sectionItemAttributes.filter { $0.resourceIndex == resourceIdx }
+        guard items.count > 1 else { return }
+
+        // Deterministic ordering, so clustering and column assignment never depend on the
+        // caller's item order.
+        let sortedItems = items.sorted {
+            if $0.frame.minY != $1.frame.minY {
+                return $0.frame.minY < $1.frame.minY
             }
-            return $0.first?.frame.minY ?? .greatestFiniteMagnitude < $1.first?.frame.minY ?? .greatestFiniteMagnitude
+            if $0.frame.maxY != $1.frame.maxY {
+                return $0.frame.maxY < $1.frame.maxY
+            }
+            return isEarlierIndexPath($0.indexPath, than: $1.indexPath)
         }
-        var adjustedItems: Set<UICollectionViewLayoutAttributes> = []
+
+        // Partition into connected overlap clusters (chain overlap, not just pairwise).
+        var clusters = [[UICollectionViewLayoutAttributes]]()
+        var currentCluster = [UICollectionViewLayoutAttributes]()
+        var currentClusterMaxY: CGFloat = -.greatestFiniteMagnitude
+        for item in sortedItems {
+            if !currentCluster.isEmpty && item.frame.minY < currentClusterMaxY {
+                currentCluster.append(item)
+                currentClusterMaxY = max(currentClusterMaxY, item.frame.maxY)
+            } else {
+                if !currentCluster.isEmpty { clusters.append(currentCluster) }
+                currentCluster = [item]
+                currentClusterMaxY = item.frame.maxY
+            }
+        }
+        if !currentCluster.isEmpty { clusters.append(currentCluster) }
+
+        // Nothing in this resource actually overlaps: leave every item at its original full-width frame.
+        guard clusters.contains(where: { $0.count > 1 }) else { return }
+
         var sectionZ = currentSectionZ
+        for cluster in clusters {
+            guard cluster.count > 1 else { continue }
 
-        // First draw the largest overlap items layout (only this case itemWidth is fixed and always at the right position)
-        guard let largestOverlapCountGroup = sortedOverlapGroups.first else { return }
-        setItemsAdjustedAttributes(
-            fullWidth: sectionWidth,
-            items: largestOverlapCountGroup,
-            currentMinX: sectionMinX,
-            sectionZ: &sectionZ,
-            adjustedItems: &adjustedItems
-        )
-        
-        let minItemDivisionWidth = (sectionWidth / CGFloat(largestOverlapCountGroup.count)).toDecimal1Value()
-
-        // Process remaining groups by dependency on already adjusted items.
-        // Groups that intersect already-placed items must be handled first,
-        // otherwise they may be spread across full width and overlap existing frames.
-        var unprocessedGroups = Array(sortedOverlapGroups.dropFirst())
-        while !unprocessedGroups.isEmpty {
-            let nextGroupIndex = unprocessedGroups.indices.max { lhs, rhs in
-                // Prefer the group with more already-adjusted members:
-                // it has stricter placement constraints and should be resolved first.
-                let lhsAdjustedCount = unprocessedGroups[lhs].reduce(into: 0) { partialResult, item in
-                    if adjustedItems.contains(item) { partialResult += 1 }
-                }
-                let rhsAdjustedCount = unprocessedGroups[rhs].reduce(into: 0) { partialResult, item in
-                    if adjustedItems.contains(item) { partialResult += 1 }
-                }
-
-                if lhsAdjustedCount != rhsAdjustedCount {
-                    return lhsAdjustedCount < rhsAdjustedCount
-                }
-                if unprocessedGroups[lhs].count != unprocessedGroups[rhs].count {
-                    return unprocessedGroups[lhs].count < unprocessedGroups[rhs].count
-                }
-
-                let lhsMinY = unprocessedGroups[lhs].first?.frame.minY ?? .greatestFiniteMagnitude
-                let rhsMinY = unprocessedGroups[rhs].first?.frame.minY ?? .greatestFiniteMagnitude
-                return lhsMinY > rhsMinY
-            } ?? unprocessedGroups.startIndex
-            let group = unprocessedGroups.remove(at: nextGroupIndex)
-            var unadjustedItems = [UICollectionViewLayoutAttributes]()
-            // unavailable area and already sorted
-            var adjustedRanges = [ClosedRange<CGFloat>]()
-            group.forEach {
-                if adjustedItems.contains($0) {
-                    adjustedRanges.append($0.frame.minX...$0.frame.maxX)
+            // Greedy column packing: lowest column index whose last occupant already ended
+            // at or before this item's start.
+            var columnEndY = [CGFloat]()
+            var columnForItem = [Int](repeating: 0, count: cluster.count)
+            for (index, item) in cluster.enumerated() {
+                if let column = columnEndY.firstIndex(where: { $0 <= item.frame.minY }) {
+                    columnForItem[index] = column
+                    columnEndY[column] = item.frame.maxY
                 } else {
-                    unadjustedItems.append($0)
+                    columnForItem[index] = columnEndY.count
+                    columnEndY.append(item.frame.maxY)
                 }
             }
-            guard adjustedRanges.count > 0 else {
-                // No need to recalulate the layout
-                setItemsAdjustedAttributes(fullWidth: sectionWidth, items: group, currentMinX: sectionMinX, sectionZ: &sectionZ, adjustedItems: &adjustedItems)
-                continue
-            }
-            guard unadjustedItems.count > 0 else { continue }
-            // minItemDivisionWidth is used for division below; skip if it rounded to zero
-            guard minItemDivisionWidth > 0 else { continue }
+            let columnCount = columnEndY.count
 
-            let availableRanges = getAvailableRanges(sectionRange: sectionMinX...sectionMinX + sectionWidth, adjustedRanges: adjustedRanges)
-            var i = 0, j = 0
-            while i < unadjustedItems.count && j < availableRanges.count {
-                let availableRange = availableRanges[j]
-                let availableWidth = availableRange.upperBound - availableRange.lowerBound
-                let availableMaxItemsCount = Int(round(availableWidth / minItemDivisionWidth))
-                let leftUnadjustedItemsCount = unadjustedItems.count - i
-                if leftUnadjustedItemsCount <= availableMaxItemsCount {
-                    // All left unadjusted items can evenly divide the current available area
-                    setItemsAdjustedAttributes(fullWidth: availableWidth, items: Array(unadjustedItems[i...]), currentMinX: availableRange.lowerBound, sectionZ: &sectionZ, adjustedItems: &adjustedItems)
-                    break
-                } else if availableMaxItemsCount > 0 {
-                    // This current available interval cannot afford all left unadjusted items
-                    setItemsAdjustedAttributes(fullWidth: availableWidth, items: Array(unadjustedItems[i..<i+availableMaxItemsCount]), currentMinX: availableRange.lowerBound, sectionZ: &sectionZ, adjustedItems: &adjustedItems)
-                    i += availableMaxItemsCount
-                    j += 1
-                } else {
-                    // availableWidth too narrow for even one item slot — skip this range
-                    j += 1
-                }
+            let divisionWidth = (sectionWidth / CGFloat(columnCount)).toDecimal1Value()
+
+            // Group items by their assigned column, so the expansion pass below can check
+            // whether a following column has anything that overlaps a given item in time.
+            var itemsByColumn = [[UICollectionViewLayoutAttributes]](repeating: [], count: columnCount)
+            for (index, item) in cluster.enumerated() {
+                itemsByColumn[columnForItem[index]].append(item)
             }
-        }
-    }
-    
-    /// Get current available ranges for unadjusted items with given current section range and already adjusted ranges
-    ///
-    /// - Parameters:
-    ///   - sectionRange: current section minX and maxX range
-    ///   - adjustedRanges: already adjusted ranges(cannot draw items on these ranges)
-    /// - Returns: All available ranges after substract all adjusted ranges
-    func getAvailableRanges(sectionRange: ClosedRange<CGFloat>, adjustedRanges: [ClosedRange<CGFloat>]) -> [ClosedRange<CGFloat>] {
-        var availableRanges: [ClosedRange<CGFloat>] = [sectionRange]
-        let sortedAdjustedRange = adjustedRanges.sorted { $0.lowerBound < $1.lowerBound }
-        for adjustedRange in sortedAdjustedRange {
-            guard let lastAvailableRange = availableRanges.last else { continue }
-            if adjustedRange.lowerBound > lastAvailableRange.lowerBound + itemMargin.left + itemMargin.right {
-                var currentAvailableRanges = [ClosedRange<CGFloat>]()
-                // TODO: still exists 707.1999 and 708, needs to be fixed
-                if adjustedRange.upperBound + itemMargin.right >= lastAvailableRange.upperBound {
-                    // Adjusted range covers right part of the last available range
-                    let leftAvailableRange = lastAvailableRange.lowerBound...adjustedRange.lowerBound
-                    currentAvailableRanges.append(leftAvailableRange)
-                } else {
-                    // Adjusted range is in middle of the last available range
-                    let leftAvailableRange = lastAvailableRange.lowerBound...adjustedRange.lowerBound
-                    currentAvailableRanges.append(leftAvailableRange)
-                    // Guard against floating-point precision edge cases where bounds can be inverted
-                    if adjustedRange.upperBound < lastAvailableRange.upperBound {
-                        let rightAvailableRange = adjustedRange.upperBound...lastAvailableRange.upperBound
-                        currentAvailableRanges.append(rightAvailableRange)
+
+            for (index, item) in cluster.enumerated() {
+                let column = columnForItem[index]
+
+                // Rightward expansion: grow the item's column span through any following
+                // columns that have no item overlapping it in time, stopping at the first
+                // column that does.
+                var span = 1
+                var probeColumn = column + 1
+                while probeColumn < columnCount {
+                    let isBlocked = itemsByColumn[probeColumn].contains {
+                        $0.frame.minY < item.frame.maxY && item.frame.minY < $0.frame.maxY
                     }
+                    if isBlocked { break }
+                    span += 1
+                    probeColumn += 1
                 }
-                availableRanges.removeLast()
-                availableRanges += currentAvailableRanges
-            } else {
-                if adjustedRange.upperBound > lastAvailableRange.lowerBound {
-                    availableRanges.removeLast()
-                    if adjustedRange.upperBound < lastAvailableRange.upperBound {
-                        let availableRange = adjustedRange.upperBound...lastAvailableRange.upperBound
-                        availableRanges.append(availableRange)
-                    }
-                    // else: adjusted range fully covers the last available range, so nothing remains
-                } else {
-                    // adjustedRange is included in a previously adjusted range, like (3, 7) & (5, 7) — no action needed
-                }
+
+                // Floor the width at `min(1, divisionWidth)`: the floor must never exceed the
+                // column pitch, otherwise a floored item would start intersecting its column
+                // neighbour. This guards a narrow resource column (many providers) combined
+                // with a deep overlap cluster, where `divisionWidth - itemMargin.left -
+                // itemMargin.right` can reach zero or below and render the item invisible —
+                // exactly the class of bug this fix addresses. This is not an absolute
+                // guarantee of visibility: at absurdly small widths (`sectionWidth` under
+                // roughly `0.05 * columnCount`) `divisionWidth` itself rounds to 0, at which
+                // point `min(1, divisionWidth)` is 0 and the floor does nothing.
+                let itemWidth = max(CGFloat(span) * divisionWidth - itemMargin.left - itemMargin.right, min(1, divisionWidth))
+                item.frame.origin.x = (sectionMinX + itemMargin.left + CGFloat(column) * divisionWidth).toDecimal1Value()
+                item.frame.size = CGSize(width: itemWidth, height: item.frame.height)
+                item.zIndex = sectionZ
+                sectionZ += 1
             }
         }
-        return availableRanges
-    }
-    
-    /// Set provided items correct adjusted layout attributes
-    ///
-    /// - Parameters:
-    ///   - fullWidth: Full width for items can be divided
-    ///   - items: All the items need to be adjusted
-    ///   - currentMinX: Current minimum contentOffset(start position of the first item)
-    ///   - sectionZ: section Z value (inout)
-    ///   - adjustedItems: already adjused item (inout)
-    private func setItemsAdjustedAttributes(fullWidth: CGFloat,
-                                            items: [UICollectionViewLayoutAttributes],
-                                            currentMinX: CGFloat,
-                                            sectionZ: inout Int,
-                                            adjustedItems: inout Set<UICollectionViewLayoutAttributes>) {
-        let divisionWidth = (fullWidth / CGFloat(items.count)).toDecimal1Value()
-        let itemWidth = divisionWidth - itemMargin.left - itemMargin.right
-        for (index, itemAttribute) in items.enumerated() {
-            itemAttribute.frame.origin.x = (currentMinX + itemMargin.left + CGFloat(index) * divisionWidth).toDecimal1Value()
-            itemAttribute.frame.size = CGSize(width: itemWidth, height: itemAttribute.frame.height)
-            itemAttribute.zIndex = sectionZ
-            sectionZ += 1
-            adjustedItems.insert(itemAttribute)
-        }
-    }
-    
-    /// Get maximum number of currently overlapping items, used to refer only
-    ///
-    /// Algorithm from http://www.zrzahid.com/maximum-number-of-overlapping-intervals/
-    private func maxOverlapIntervalCount(startY: [CGFloat], endY: [CGFloat]) -> Int {
-        var maxOverlap = 0, currentOverlap = 0
-        let sortedStartY = startY.sorted(), sortedEndY = endY.sorted()
-        
-        var i = 0, j = 0
-        while i < sortedStartY.count && j < sortedEndY.count {
-            if sortedStartY[i] < sortedEndY[j] {
-                currentOverlap += 1
-                maxOverlap = max(maxOverlap, currentOverlap)
-                i += 1
-            } else {
-                currentOverlap -= 1
-                j += 1
-            }
-        }
-        return maxOverlap
-    }
-    
-    /// Group all the overlap items depending on the maximum overlap items
-    ///
-    /// Refer to the previous algorithm but integrated with groups
-    /// - Parameter items: All the items(cells) in the UICollectionView
-    /// - Returns: maxOverlapIntervalCount and all the maximum overlap groups
-    func groupOverlapItems(items: [UICollectionViewLayoutAttributes]) -> (maxOverlapIntervalCount: Int, overlapGroups: [[UICollectionViewLayoutAttributes]]) {
-        var maxOverlap = 0, currentOverlap = 0
-        // Stable sorts are required for deterministic overlap grouping.
-        // We compare by the primary axis first and then apply tie-breakers.
-        let sortedMinYItems = items.sorted {
-            if $0.frame.minY != $1.frame.minY {
-                return $0.frame.minY < $1.frame.minY
-            }
-            if $0.frame.maxY != $1.frame.maxY {
-                return $0.frame.maxY < $1.frame.maxY
-            }
-            return isEarlierIndexPath($0.indexPath, than: $1.indexPath)
-        }
-        let sortedMaxYItems = items.sorted {
-            if $0.frame.maxY != $1.frame.maxY {
-                return $0.frame.maxY < $1.frame.maxY
-            }
-            if $0.frame.minY != $1.frame.minY {
-                return $0.frame.minY < $1.frame.minY
-            }
-            return isEarlierIndexPath($0.indexPath, than: $1.indexPath)
-        }
-        let itemCount = items.count
-        
-        var i = 0, j = 0
-        var overlapGroups = [[UICollectionViewLayoutAttributes]]()
-        var currentOverlapGroup = [UICollectionViewLayoutAttributes]()
-        var shouldAppendToOverlapGroups: Bool = false
-        while i < itemCount && j < itemCount {
-            if sortedMinYItems[i].frame.minY < sortedMaxYItems[j].frame.maxY {
-                currentOverlap += 1
-                maxOverlap = max(maxOverlap, currentOverlap)
-                shouldAppendToOverlapGroups = true
-                currentOverlapGroup.append(sortedMinYItems[i])
-                i += 1
-            } else {
-                currentOverlap -= 1
-                // should not append to group with continuous minus
-                if shouldAppendToOverlapGroups {
-                    if currentOverlapGroup.count > 1 { overlapGroups.append(currentOverlapGroup) }
-                    shouldAppendToOverlapGroups = false
-                }
-                currentOverlapGroup.removeAll { $0 == sortedMaxYItems[j] }
-                j += 1
-            }
-        }
-        // Add last currentOverlapGroup
-        if currentOverlapGroup.count > 1 { overlapGroups.append(currentOverlapGroup) }
-        return (maxOverlap, overlapGroups)
     }
 
     /// Deterministic final tie-break for frame-equal items.
