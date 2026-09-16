@@ -131,10 +131,149 @@ class AllDayViewModel: NSObject {
             endDate: thirdDate.startOfDay,
             location: "Brisbane",
             isAllDay: true
+        ),
+        // ----------------------------------------------------------------------------------------------
+        // to test the issue https://linear.app/symplast/issue/FIRE-336/appts-not-showing-up-on-schedule-when-setting-location-to-all
+        // a burst of short 7:30 appointments alongside one tall 7:30-12:00 appointment, plus several
+        // 11:00 appointments that sit fully inside the tall one's time span; before the fix the 11:00
+        // ones were painted underneath the tall event and invisible
+        AllDayEvent(
+            id: "fire336-730-1",
+            title: "7:30 #1",
+            startDate: fire336StartOfDay(hour: 7, minute: 30),
+            endDate: fire336StartOfDay(hour: 8, minute: 0),
+            location: "Room 1",
+            isAllDay: false
+        ),
+        AllDayEvent(
+            id: "fire336-730-2",
+            title: "7:30 #2",
+            startDate: fire336StartOfDay(hour: 7, minute: 30),
+            endDate: fire336StartOfDay(hour: 8, minute: 0),
+            location: "Room 2",
+            isAllDay: false
+        ),
+        AllDayEvent(
+            id: "fire336-730-3",
+            title: "7:30 #3",
+            startDate: fire336StartOfDay(hour: 7, minute: 30),
+            endDate: fire336StartOfDay(hour: 8, minute: 0),
+            location: "Room 3",
+            isAllDay: false
+        ),
+        AllDayEvent(
+            id: "fire336-730-4",
+            title: "7:30 #4",
+            startDate: fire336StartOfDay(hour: 7, minute: 30),
+            endDate: fire336StartOfDay(hour: 8, minute: 0),
+            location: "Room 4",
+            isAllDay: false
+        ),
+        AllDayEvent(
+            id: "fire336-730-5",
+            title: "7:30 #5",
+            startDate: fire336StartOfDay(hour: 7, minute: 30),
+            endDate: fire336StartOfDay(hour: 8, minute: 0),
+            location: "Room 5",
+            isAllDay: false
+        ),
+        AllDayEvent(
+            id: "fire336-tall",
+            title: "Tall 7:30-12:00",
+            startDate: fire336StartOfDay(hour: 7, minute: 30),
+            endDate: fire336StartOfDay(hour: 12, minute: 0),
+            location: "Main Theatre",
+            isAllDay: false
+        ),
+        AllDayEvent(
+            id: "fire336-1100-1",
+            title: "11:00 #1",
+            startDate: fire336StartOfDay(hour: 11, minute: 0),
+            endDate: fire336StartOfDay(hour: 11, minute: 30),
+            location: "Room 6",
+            isAllDay: false
+        ),
+        AllDayEvent(
+            id: "fire336-1100-2",
+            title: "11:00 #2",
+            startDate: fire336StartOfDay(hour: 11, minute: 0),
+            endDate: fire336StartOfDay(hour: 11, minute: 30),
+            location: "Room 7",
+            isAllDay: false
+        ),
+        AllDayEvent(
+            id: "fire336-1100-3",
+            title: "11:00 #3",
+            startDate: fire336StartOfDay(hour: 11, minute: 0),
+            endDate: fire336StartOfDay(hour: 11, minute: 30),
+            location: "Room 8",
+            isAllDay: false
+        ),
+        // ----------------------------------------------------------------------------------------------
+        // to test the issue https://linear.app/symplast/issue/FIRE-336/appts-not-showing-up-on-schedule-when-setting-location-to-all
+        // a full working-day block plus isolated short appointments with no time-neighbour to their
+        // right, and one overlapping pair; events with free space to their right should stretch wide
+        // instead of being squeezed to a uniform 1/N column width
+        AllDayEvent(
+            id: "expansion-full-day",
+            title: "Full Day 8:00-18:00",
+            startDate: expansionStartOfDay(hour: 8, minute: 0),
+            endDate: expansionStartOfDay(hour: 18, minute: 0),
+            location: "Main Theatre",
+            isAllDay: false
+        ),
+        AllDayEvent(
+            id: "expansion-isolated-9",
+            title: "Isolated 9:00",
+            startDate: expansionStartOfDay(hour: 9, minute: 0),
+            endDate: expansionStartOfDay(hour: 9, minute: 30),
+            location: "Consult Room",
+            isAllDay: false
+        ),
+        AllDayEvent(
+            id: "expansion-isolated-13",
+            title: "Isolated 13:00",
+            startDate: expansionStartOfDay(hour: 13, minute: 0),
+            endDate: expansionStartOfDay(hour: 13, minute: 30),
+            location: "Consult Room",
+            isAllDay: false
+        ),
+        AllDayEvent(
+            id: "expansion-isolated-1630",
+            title: "Isolated 16:30",
+            startDate: expansionStartOfDay(hour: 16, minute: 30),
+            endDate: expansionStartOfDay(hour: 17, minute: 0),
+            location: "Consult Room",
+            isAllDay: false
+        ),
+        AllDayEvent(
+            id: "expansion-pair-1",
+            title: "Pair #1",
+            startDate: expansionStartOfDay(hour: 14, minute: 0),
+            endDate: expansionStartOfDay(hour: 14, minute: 45),
+            location: "Room 1",
+            isAllDay: false
+        ),
+        AllDayEvent(
+            id: "expansion-pair-2",
+            title: "Pair #2",
+            startDate: expansionStartOfDay(hour: 14, minute: 0),
+            endDate: expansionStartOfDay(hour: 14, minute: 45),
+            location: "Room 2",
+            isAllDay: false
         )
+        // ----------------------------------------------------------------------------------------------
     ]
-    
+
     lazy var eventsByDate = JZWeekViewHelper.getIntraEventsByDate(originalEvents: events)
 
     var currentSelectedData: OptionsSelectedData!
+
+    private func fire336StartOfDay(hour: Int, minute: Int) -> Date {
+        Calendar.current.date(bySettingHour: hour, minute: minute, second: 0, of: thirdDate)!
+    }
+
+    private func expansionStartOfDay(hour: Int, minute: Int) -> Date {
+        Calendar.current.date(bySettingHour: hour, minute: minute, second: 0, of: Date().add(component: .day, value: 3))!
+    }
 }
