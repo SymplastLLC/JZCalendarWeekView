@@ -137,6 +137,9 @@ open class JZBaseWeekView: UIView {
         false
     }
     internal var scrollDirection: ScrollDirection?
+    /// `scrollViewDidScroll` writes the offset, which re-enters it. Backstop against the clamps overwriting
+    /// each other endlessly and overflowing the stack.
+    private var isAdjustingContentOffset = false
 
     // Scrollable Range
     internal var scrollableEdges: (leftX: CGFloat?, rightX: CGFloat?)
@@ -748,18 +751,36 @@ extension JZBaseWeekView: UICollectionViewDelegate, UICollectionViewDelegateFlow
         self.scrollDirection = nil
     }
 
+    /// Writes the offset only when it is off by more than half a pixel. Defensive: UIKit stores a pixel-rounded
+    /// offset, so an unaligned target should not be rewritten on every callback.
+    private func adjustContentOffset(of scrollView: UIScrollView, x: CGFloat? = nil, y: CGFloat? = nil) {
+        let scale = traitCollection.displayScale > 0 ? traitCollection.displayScale : 1
+        let tolerance = 0.5 / scale
+        if let x = x, abs(scrollView.contentOffset.x - x) > tolerance {
+            scrollView.contentOffset.x = x
+        }
+        if let y = y, abs(scrollView.contentOffset.y - y) > tolerance {
+            scrollView.contentOffset.y = y
+        }
+    }
+
     open func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        // A nested call is caused by our own offset write below
+        guard !isAdjustingContentOffset else { return }
+        isAdjustingContentOffset = true
+        defer { isAdjustingContentOffset = false }
+
         guard isEnabledHorizontalScrolling else {
-            collectionView.contentOffset.x = contentViewWidth
+            adjustContentOffset(of: collectionView, x: contentViewWidth)
             return
         }
         
         guard let scrollDirection = scrollDirection else { return }
         if let lockedAt = scrollDirection.lockedAt {
             if scrollDirection.direction == .horizontal {
-                scrollView.contentOffset.y = lockedAt
+                adjustContentOffset(of: scrollView, y: lockedAt)
             } else {
-                scrollView.contentOffset.x = lockedAt
+                adjustContentOffset(of: scrollView, x: lockedAt)
             }
         }
         
@@ -769,11 +790,12 @@ extension JZBaseWeekView: UICollectionViewDelegate, UICollectionViewDelegateFlow
         updateAllDayBar(isScrolling: true)
         
         guard isNeedRestrictHorizontalScroll else { return }
-        let rightLock = ((contentViewWidth - actualFrameWidth) + contentViewWidth)
+        // When the columns already fit the frame the only valid offset is contentViewWidth
+        let rightLock = max(contentViewWidth, (contentViewWidth - actualFrameWidth) + contentViewWidth)
         if scrollView.contentOffset.x < contentViewWidth {
-            collectionView.contentOffset.x = contentViewWidth
+            adjustContentOffset(of: collectionView, x: contentViewWidth)
         } else if scrollView.contentOffset.x > rightLock {
-            collectionView.contentOffset.x = rightLock
+            adjustContentOffset(of: collectionView, x: rightLock)
         }
     }
     

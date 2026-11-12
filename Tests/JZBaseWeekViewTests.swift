@@ -296,4 +296,67 @@ class JZBaseWeekViewTests: XCTestCase {
         testbaseWeekView()
     }
 
+    // MARK: - scrollViewDidScroll re-entrancy (Sentry XK-1X6 / XK-6N3: stack overflow)
+
+    /// Resource columns narrower than the frame (stale `minimalNumberOfResources` after a resize) made
+    /// `rightLock < contentViewWidth`: the two clamp branches kept overwriting each other's offset,
+    /// and every write re-entered `scrollViewDidScroll` until the stack overflowed.
+    func testScrollViewDidScroll_clampDoesNotPingPongWhenColumnsAreNarrowerThanFrame() throws {
+        try XCTSkipIf(UIDevice.current.userInterfaceIdiom == .phone, "horizontal scrolling is disabled on iPhone")
+        let weekView = makeCountingWeekView(width: 1000)
+        weekView.numOfResources = 8
+        weekView.minimalSubSectionWidth = 50
+        weekView.setupCalendar(numOfDays: 1, setDate: Helpers.testDate, allEvents: [:])
+        weekView.layoutIfNeeded()
+        weekView.scrollDirection = ScrollDirection(direction: .horizontal, lockedAt: nil)
+
+        // leftward, then rightward: the only valid offset is contentViewWidth either way
+        for offsetX in [10, weekView.contentViewWidth + 30] {
+            weekView.resetCounters()
+
+            weekView.collectionView.contentOffset = CGPoint(x: offsetX, y: 0)
+
+            XCTAssertLessThanOrEqual(weekView.maxDepth, 2, "scrollViewDidScroll recursed through its own offset write")
+            XCTAssertEqual(weekView.collectionView.contentOffset.x, weekView.contentViewWidth, accuracy: 1, "offset \(offsetX)")
+        }
+    }
+
+    /// With horizontal scrolling off the offset is pinned to a (usually not pixel-aligned) `contentViewWidth`.
+    func testScrollViewDidScroll_pinsOffsetWhenHorizontalScrollingDisabled() {
+        let weekView = makeCountingWeekView(width: 1000.11)
+        weekView.flowLayout.rowHeaderWidth = 44.3
+        weekView.setupCalendar(numOfDays: 3, setDate: Helpers.testDate, allEvents: [:])
+        weekView.layoutIfNeeded()
+        weekView.resetCounters()
+
+        weekView.collectionView.contentOffset = CGPoint(x: 10, y: 0)
+
+        XCTAssertLessThanOrEqual(weekView.maxDepth, 2)
+        XCTAssertEqual(weekView.collectionView.contentOffset.x, weekView.contentViewWidth, accuracy: 0.5)
+    }
+
+    private func makeCountingWeekView(width: CGFloat) -> ReentrancyCountingWeekView {
+        // No UIWindow: SPM test bundles have no app host, so creating one crashes on Mac Catalyst.
+        ReentrancyCountingWeekView(frame: CGRect(x: 0, y: 0, width: width, height: 667))
+    }
+
+}
+
+/// Counts nested `scrollViewDidScroll` calls and cuts a runaway recursion short so a regression fails instead of crashing.
+private final class ReentrancyCountingWeekView: JZBaseWeekView {
+
+    private(set) var maxDepth = 0
+    private var depth = 0
+
+    func resetCounters() {
+        maxDepth = 0
+    }
+
+    override func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        depth += 1
+        maxDepth = max(maxDepth, depth)
+        defer { depth -= 1 }
+        guard depth < 50 else { return }
+        super.scrollViewDidScroll(scrollView)
+    }
 }

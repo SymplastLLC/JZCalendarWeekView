@@ -6,6 +6,7 @@
 //  Copyright © 2018 Jeff Zhang. All rights reserved.
 //
 
+import Foundation
 import JZCalendarWeekView
 
 class AllDayEvent: JZAllDayEvent {
