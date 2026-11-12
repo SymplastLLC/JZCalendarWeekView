@@ -29,6 +29,5 @@ timeline.xctimeline
 playground.xcworkspace
 
 .build/
-Pods/
 
 .DS_Store

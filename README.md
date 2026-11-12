@@ -1,11 +1,8 @@
 <img src="https://github.com/zjfjack/JZCalendarWeekView/blob/master/Screenshots/logotype.png"/> <br /> <br />
 
-[![Build Status](https://travis-ci.org/zjfjack/JZCalendarWeekView.svg?branch=master)](https://travis-ci.org/zjfjack/JZCalendarWeekView)
-[![CocoaPods](https://img.shields.io/cocoapods/v/JZCalendarWeekView.svg)](https://cocoapods.org/pods/JZCalendarWeekView)
-[![Carthage compatible](https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat)](https://github.com/Carthage/Carthage)
-[![Platform](https://img.shields.io/cocoapods/p/JZCalendarWeekView.svg?style=flat)](https://github.com/zjfjack/JZCalendarWeekView)
-[![Swift 5.0](https://img.shields.io/badge/Swift-5.0-orange.svg?style=flat)](https://developer.apple.com/swift/)
-[![license MIT](https://img.shields.io/cocoapods/l/JZCalendarWeekView.svg)](http://opensource.org/licenses/MIT)
+[![Platform](https://img.shields.io/badge/platform-iOS%2017%2B%20%7C%20Mac%20Catalyst%2017%2B-lightgrey.svg?style=flat)](https://github.com/SymplastLLC/JZCalendarWeekView)
+[![Swift 5.10](https://img.shields.io/badge/Swift-5.10-orange.svg?style=flat)](https://developer.apple.com/swift/)
+[![license MIT](https://img.shields.io/badge/license-MIT-blue.svg)](http://opensource.org/licenses/MIT)
 
 iOS Calendar Week/Day View in Swift
 
@@ -154,34 +151,20 @@ Horizontal scrollable range dates allow you to set your preferred scrollable ran
 
 ## Requirements
 
-- iOS 9.0+
-- Xcode 10+
-- Swift 4.2
+- iOS 17.0+ / Mac Catalyst 17.0+
+- Xcode 15.3+
+- Swift 5.10
 
 ## Installation
 
 ### Swift Package Manager
-JZCalendarWeekView can be added to your project by adding the following dependency to your `Package.swift`:
+JZCalendarWeekView is distributed only through Swift Package Manager. Add the following dependency to your `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/zjfjack/JZCalendarWeekView.git", .upToNextMajor(from: "0.7.2"))
+.package(url: "https://github.com/SymplastLLC/JZCalendarWeekView", from: "1.0.10")
 ```
 
-### Cocoapods
-JZCalendarWeekView can be added to your project by adding the following line to your `Podfile`:
-
-```ruby
-# Latest release in CocoaPods (recommend to use latest version before v1.0.0 release, optional: provide version number)
-pod 'JZCalendarWeekView'
-```
-
-### Carthage
-JZCalendarWeekView can be added to your project by adding the following line to your `Cartfile`:
-
-```ruby
-# Latest release on Carthage (recommend to use latest version before v1.0.0 release, optional: provide version number)
-github "zjfjack/JZCalendarWeekView"
-```
+and add `JZCalendarWeekView` to your target's dependencies. In Xcode: File > Add Package Dependencies... and enter the repository URL.
 
 ## Todo
 

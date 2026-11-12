@@ -36,48 +36,8 @@
 		8EBD62EA2096F8AD00520E58 /* LongPressViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EBD62E92096F8AD00520E58 /* LongPressViewController.swift */; };
 		8EC8A46B209999A2002C7634 /* LongPressEventCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EC8A469209999A2002C7634 /* LongPressEventCell.swift */; };
 		8EC8A46C209999A2002C7634 /* LongPressEventCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 8EC8A46A209999A2002C7634 /* LongPressEventCell.xib */; };
-		8EE28FBF20882DE900C69A77 /* JZCalendarWeekView.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8EE28FBB20882D7A00C69A77 /* JZCalendarWeekView.framework */; };
-		8EE28FC020882DE900C69A77 /* JZCalendarWeekView.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 8EE28FBB20882D7A00C69A77 /* JZCalendarWeekView.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		F9CA9C8B28588331000E295E /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = F9CA9C8A28588331000E295E /* SnapKit */; };
+		AA11BB2200000000000000A2 /* JZCalendarWeekView in Frameworks */ = {isa = PBXBuildFile; productRef = AA11BB2200000000000000A3 /* JZCalendarWeekView */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXContainerItemProxy section */
-		8EE28FBA20882D7A00C69A77 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 8EE28FB520882D7900C69A77 /* JZCalendarWeekView.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 8E1BA94A206B4329007BE13C;
-			remoteInfo = JZCalendarWeekView;
-		};
-		8EE28FBC20882D7A00C69A77 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 8EE28FB520882D7900C69A77 /* JZCalendarWeekView.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 8E023C75206C6E4B00C523BE;
-			remoteInfo = JZCalendarWeekViewTests;
-		};
-		8EE28FC120882DE900C69A77 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 8EE28FB520882D7900C69A77 /* JZCalendarWeekView.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 8E1BA949206B4329007BE13C;
-			remoteInfo = JZCalendarWeekView;
-		};
-/* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		8E7263DA2074ADE900ECF7CD /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-				8EE28FC020882DE900C69A77 /* JZCalendarWeekView.framework in Embed Frameworks */,
-			);
-			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		8E048ED3207EF65000A532BA /* OptionsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptionsViewModel.swift; sourceTree = "<group>"; };
@@ -111,7 +71,6 @@
 		8EBD62E92096F8AD00520E58 /* LongPressViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LongPressViewController.swift; sourceTree = "<group>"; };
 		8EC8A469209999A2002C7634 /* LongPressEventCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LongPressEventCell.swift; sourceTree = "<group>"; };
 		8EC8A46A209999A2002C7634 /* LongPressEventCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = LongPressEventCell.xib; sourceTree = "<group>"; };
-		8EE28FB520882D7900C69A77 /* JZCalendarWeekView.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = JZCalendarWeekView.xcodeproj; path = ../JZCalendarWeekView.xcodeproj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -119,8 +78,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8EE28FBF20882DE900C69A77 /* JZCalendarWeekView.framework in Frameworks */,
-				F9CA9C8B28588331000E295E /* SnapKit in Frameworks */,
+						AA11BB2200000000000000A2 /* JZCalendarWeekView in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -167,8 +125,7 @@
 				8E5BB3D02072F4A000FA853F /* JZCalendarWeekViewExample */,
 				8E5BB3CF2072F4A000FA853F /* Products */,
 				8E5BB3F42072FD8700FA853F /* Frameworks */,
-				8EE28FB520882D7900C69A77 /* JZCalendarWeekView.xcodeproj */,
-			);
+					);
 			sourceTree = "<group>";
 		};
 		8E5BB3CF2072F4A000FA853F /* Products */ = {
@@ -237,15 +194,6 @@
 			path = LongPressViews;
 			sourceTree = "<group>";
 		};
-		8EE28FB620882D7900C69A77 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				8EE28FBB20882D7A00C69A77 /* JZCalendarWeekView.framework */,
-				8EE28FBD20882D7A00C69A77 /* JZCalendarWeekViewTests.xctest */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -256,16 +204,14 @@
 				8E5BB3CA2072F4A000FA853F /* Sources */,
 				8E5BB3CB2072F4A000FA853F /* Frameworks */,
 				8E5BB3CC2072F4A000FA853F /* Resources */,
-				8E7263DA2074ADE900ECF7CD /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				8EE28FC220882DE900C69A77 /* PBXTargetDependency */,
 			);
 			name = JZCalendarWeekViewExample;
 			packageProductDependencies = (
-				F9CA9C8A28588331000E295E /* SnapKit */,
+				AA11BB2200000000000000A3 /* JZCalendarWeekView */,
 			);
 			productName = JZCalendarViewExample;
 			productReference = 8E5BB3CE2072F4A000FA853F /* JZCalendarWeekViewExample.app */;
@@ -299,39 +245,16 @@
 			);
 			mainGroup = 8E5BB3C52072F4A000FA853F;
 			packageReferences = (
-				F9CA9C8928588331000E295E /* XCRemoteSwiftPackageReference "SnapKit" */,
+				AA11BB2200000000000000A1 /* XCLocalSwiftPackageReference ".." */,
 			);
 			productRefGroup = 8E5BB3CF2072F4A000FA853F /* Products */;
 			projectDirPath = "";
-			projectReferences = (
-				{
-					ProductGroup = 8EE28FB620882D7900C69A77 /* Products */;
-					ProjectRef = 8EE28FB520882D7900C69A77 /* JZCalendarWeekView.xcodeproj */;
-				},
-			);
 			projectRoot = "";
 			targets = (
 				8E5BB3CD2072F4A000FA853F /* JZCalendarWeekViewExample */,
 			);
 		};
 /* End PBXProject section */
-
-/* Begin PBXReferenceProxy section */
-		8EE28FBB20882D7A00C69A77 /* JZCalendarWeekView.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = JZCalendarWeekView.framework;
-			remoteRef = 8EE28FBA20882D7A00C69A77 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		8EE28FBD20882D7A00C69A77 /* JZCalendarWeekViewTests.xctest */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.cfbundle;
-			path = JZCalendarWeekViewTests.xctest;
-			remoteRef = 8EE28FBC20882D7A00C69A77 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		8E5BB3CC2072F4A000FA853F /* Resources */ = {
@@ -381,14 +304,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		8EE28FC220882DE900C69A77 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = JZCalendarWeekView;
-			targetProxy = 8EE28FC120882DE900C69A77 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		8E5BB3D52072F4A000FA853F /* Main.storyboard */ = {
@@ -463,7 +378,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -520,7 +435,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -537,7 +452,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				INFOPLIST_FILE = "$(SRCROOT)/JZCalendarWeekViewExample/Supporting Files/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -559,7 +474,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				INFOPLIST_FILE = "$(SRCROOT)/JZCalendarWeekViewExample/Supporting Files/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -597,22 +512,17 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		F9CA9C8928588331000E295E /* XCRemoteSwiftPackageReference "SnapKit" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/SnapKit/SnapKit";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 5.0.0;
-			};
+/* Begin XCLocalSwiftPackageReference section */
+		AA11BB2200000000000000A1 /* XCLocalSwiftPackageReference ".." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ..;
 		};
-/* End XCRemoteSwiftPackageReference section */
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		F9CA9C8A28588331000E295E /* SnapKit */ = {
+		AA11BB2200000000000000A3 /* JZCalendarWeekView */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = F9CA9C8928588331000E295E /* XCRemoteSwiftPackageReference "SnapKit" */;
-			productName = SnapKit;
+			productName = JZCalendarWeekView;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

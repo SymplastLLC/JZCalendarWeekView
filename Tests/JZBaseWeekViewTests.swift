@@ -336,11 +336,8 @@ class JZBaseWeekViewTests: XCTestCase {
     }
 
     private func makeCountingWeekView(width: CGFloat) -> ReentrancyCountingWeekView {
-        let weekView = ReentrancyCountingWeekView(frame: CGRect(x: 0, y: 0, width: width, height: 667))
-        let window = UIWindow(frame: weekView.frame)
-        window.addSubview(weekView)
-        window.isHidden = false
-        return weekView
+        // No UIWindow: SPM test bundles have no app host, so creating one crashes on Mac Catalyst.
+        ReentrancyCountingWeekView(frame: CGRect(x: 0, y: 0, width: width, height: 667))
     }
 
 }

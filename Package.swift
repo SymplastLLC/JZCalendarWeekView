@@ -29,6 +29,11 @@ let package = Package(
             exclude: [
                 "../Example",
                 "Info.plist",
-            ])
+            ]),
+        .testTarget(
+            name: "JZCalendarWeekViewTests",
+            dependencies: ["JZCalendarWeekView"],
+            path: "Tests",
+            exclude: ["Info.plist"])
     ]
 )
